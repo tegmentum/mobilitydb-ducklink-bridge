@@ -1,0 +1,2560 @@
+/// MobilityDB Temporal Types WebAssembly Interface
+///
+/// This interface defines the temporal types and operations for
+/// WebAssembly components, enabling cross-platform mobility data processing.
+
+package mobilitydb:temporal@0.1.0;
+
+/// Core temporal types and operations
+interface types {
+    /// Timestamp with timezone represented as microseconds since Unix epoch (UTC)
+    type timestamp-tz = s64;
+
+    /// A time period with inclusive/exclusive bounds
+    record time-period {
+        start: timestamp-tz,
+        end: timestamp-tz,
+        start-inclusive: bool,
+        end-inclusive: bool,
+    }
+
+    /// Interpolation mode for sequences
+    enum interpolation {
+        stepwise,
+        linear,
+    }
+
+    /// A temporal integer instant
+    record tint-instant {
+        timestamp: timestamp-tz,
+        value: s64,
+    }
+
+    /// A temporal float instant
+    record tfloat-instant {
+        timestamp: timestamp-tz,
+        value: f64,
+    }
+
+    /// A temporal integer sequence
+    record tint-sequence {
+        instants: list<tint-instant>,
+        interpolation: interpolation,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    /// A temporal float sequence
+    record tfloat-sequence {
+        instants: list<tfloat-instant>,
+        interpolation: interpolation,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    /// A 2D point with x, y coordinates
+    record geom-point {
+        x: f64,
+        y: f64,
+    }
+
+    /// A temporal geometry point instant
+    record tgeompoint-instant {
+        timestamp: timestamp-tz,
+        point: geom-point,
+    }
+
+    /// A temporal geometry point sequence (trajectory)
+    record tgeompoint-sequence {
+        instants: list<tgeompoint-instant>,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    /// Bounding box (min-x, min-y, max-x, max-y)
+    record bounding-box {
+        min-x: f64,
+        min-y: f64,
+        max-x: f64,
+        max-y: f64,
+    }
+
+    /// Error type for temporal operations
+    variant temporal-error {
+        empty-sequence,
+        empty-sequence-set,
+        not-chronological(u32),
+        duplicate-timestamp(u32),
+        overlapping-sequences(u32),
+        invalid-period,
+        invalid-span(string),
+        interpolation-not-supported,
+        parse-error(string),
+    }
+}
+
+/// Operations on temporal integer types
+interface tint-ops {
+    use types.{timestamp-tz, time-period, tint-instant, tint-sequence, temporal-error};
+
+    /// Create a tint instant
+    tint-instant-new: func(timestamp: timestamp-tz, value: s64) -> tint-instant;
+
+    /// Create a tint sequence from instants
+    tint-sequence-new: func(instants: list<tint-instant>) -> result<tint-sequence, temporal-error>;
+
+    /// Get value at a specific timestamp
+    tint-value-at: func(seq: tint-sequence, t: timestamp-tz) -> option<s64>;
+
+    /// Get number of instants
+    tint-num-instants: func(seq: tint-sequence) -> u32;
+
+    /// Get time span
+    tint-time-span: func(seq: tint-sequence) -> option<time-period>;
+
+    /// Restrict sequence to a time period
+    tint-at-period: func(seq: tint-sequence, period: time-period) -> option<tint-sequence>;
+
+    /// Add scalar to all values
+    tint-add-scalar: func(seq: tint-sequence, scalar: s64) -> tint-sequence;
+
+    /// Compute minimum value
+    tint-min-value: func(seq: tint-sequence) -> option<s64>;
+
+    /// Compute maximum value
+    tint-max-value: func(seq: tint-sequence) -> option<s64>;
+
+    /// Compute time-weighted average
+    tint-twavg: func(seq: tint-sequence) -> option<f64>;
+
+    /// M5 (2026-06-23) — Time-weighted aggregates over an int sequence.
+    /// `tint-twcount` returns the total duration the sequence is
+    /// defined (in seconds), the time-weighted analogue of count(*).
+    tint-twcount: func(seq: tint-sequence) -> f64;
+    /// Time-weighted variance: `E[v^2] - (E[v])^2` where the
+    /// expectation is taken over time. None for empty or
+    /// zero-duration sequences.
+    tint-twvariance: func(seq: tint-sequence) -> option<f64>;
+    /// Time-weighted standard deviation: `sqrt(twvariance)`.
+    tint-twstddev: func(seq: tint-sequence) -> option<f64>;
+
+    /// Upsample so consecutive instants are no more than `target-micros` apart.
+    /// For stepwise interpolation, inserted values hold the left instant's
+    /// value (matches the shim's prior algorithm).
+    /// Mirrors mdb_temporal_core::TIntSequence::upsample_to_target.
+    tint-upsample-to-target: func(seq: tint-sequence, target-micros: s64) -> option<tint-sequence>;
+
+    /// Consecutive-difference sequence. value(k) = seq[k] - seq[k-1];
+    /// value(0) = 0. Stepwise interpolation.
+    /// Mirrors mdb_temporal_core::tint::tint_diff.
+    tint-diff: func(seq: tint-sequence) -> tint-sequence;
+}
+
+/// Operations on temporal float types
+interface tfloat-ops {
+    use types.{timestamp-tz, time-period, tfloat-instant, tfloat-sequence, temporal-error, interpolation};
+
+    /// Create a tfloat instant
+    tfloat-instant-new: func(timestamp: timestamp-tz, value: f64) -> tfloat-instant;
+
+    /// Create a tfloat sequence from instants with linear interpolation
+    tfloat-sequence-new: func(instants: list<tfloat-instant>) -> result<tfloat-sequence, temporal-error>;
+
+    /// Create a tfloat sequence with specified interpolation
+    tfloat-sequence-new-with-interpolation: func(
+        instants: list<tfloat-instant>,
+        interp: interpolation
+    ) -> result<tfloat-sequence, temporal-error>;
+
+    /// Get value at a specific timestamp
+    tfloat-value-at: func(seq: tfloat-sequence, t: timestamp-tz) -> option<f64>;
+
+    /// Get number of instants
+    tfloat-num-instants: func(seq: tfloat-sequence) -> u32;
+
+    /// Get time span
+    tfloat-time-span: func(seq: tfloat-sequence) -> option<time-period>;
+
+    /// Restrict sequence to a time period
+    tfloat-at-period: func(seq: tfloat-sequence, period: time-period) -> option<tfloat-sequence>;
+
+    /// Add scalar to all values
+    tfloat-add-scalar: func(seq: tfloat-sequence, scalar: f64) -> tfloat-sequence;
+
+    /// Multiply all values by scalar
+    tfloat-mul-scalar: func(seq: tfloat-sequence, scalar: f64) -> tfloat-sequence;
+
+    /// Compute minimum value
+    tfloat-min-value: func(seq: tfloat-sequence) -> option<f64>;
+
+    /// Compute maximum value
+    tfloat-max-value: func(seq: tfloat-sequence) -> option<f64>;
+
+    /// Compute time-weighted average
+    tfloat-twavg: func(seq: tfloat-sequence) -> option<f64>;
+
+    /// M5 (2026-06-23) — Time-weighted aggregates over a float
+    /// sequence. `tfloat-twcount` is the total duration (seconds)
+    /// the sequence is defined. `tfloat-twvariance` computes
+    /// `E[v^2] - (E[v])^2` with the expectation over time; for
+    /// linear segments the v^2 integral uses
+    /// `a^2·Δt + a·b·Δt^2 + b^2·Δt^3/3`. `tfloat-twstddev` is
+    /// the square root of variance.
+    tfloat-twcount: func(seq: tfloat-sequence) -> f64;
+    tfloat-twvariance: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-twstddev: func(seq: tfloat-sequence) -> option<f64>;
+
+    /// Compute integral (area under curve)
+    tfloat-integral: func(seq: tfloat-sequence) -> f64;
+
+    /// Compute derivative (returns stepwise sequence of slopes)
+    tfloat-derivative: func(seq: tfloat-sequence) -> option<tfloat-sequence>;
+
+    /// Upsample so consecutive instants are no more than `target-micros` apart.
+    /// Per-segment factor derived from gap / target-micros.
+    /// Mirrors mdb_temporal_core::TFloatSequence::upsample_to_target.
+    tfloat-upsample-to-target: func(seq: tfloat-sequence, target-micros: s64) -> option<tfloat-sequence>;
+
+    /// Detect approximate periodicity via autocorrelation, returning the
+    /// dominant period in microseconds. Returns None when no clear
+    /// periodicity is found (correlation > 0.5 threshold upstream).
+    /// Mirrors mdb_temporal_core::tfloat::tfloat_detect_periodicity.
+    tfloat-detect-periodicity: func(seq: tfloat-sequence, min-period-instants: u32) -> option<s64>;
+
+    /// Period-over-period fractional change (`(curr - prev) / prev`).
+    /// First instant gets 0. When the previous value is 0, the change
+    /// for that instant is 0 (avoiding divide-by-zero).
+    /// Mirrors mdb_temporal_core::tfloat::tfloat_pct_change.
+    tfloat-pct-change: func(seq: tfloat-sequence) -> tfloat-sequence;
+
+    /// Count monotonic-direction segments (each Δvalue sign flip ends
+    /// one segment and starts another). Empty → 0; otherwise ≥ 1.
+    /// Mirrors mdb_temporal_core::tfloat::tfloat_count_trend_segments.
+    tfloat-count-trend-segments: func(seq: tfloat-sequence) -> u32;
+
+    /// Fill gaps using per-segment "n_extra fractions" strategy. For
+    /// each gap exceeding `max-gap-micros`, inserts `(gap/max-gap) - 1`
+    /// fills at evenly-spaced fractions of the gap. If `max-gap-micros`
+    /// is <= 0, derives the threshold from the median gap × 2.
+    /// Mirrors mdb_temporal_core::tfloat::tfloat_fill_gaps_auto_interval.
+    tfloat-fill-gaps-auto-interval: func(
+        seq: tfloat-sequence,
+        max-gap-micros: s64,
+    ) -> tfloat-sequence;
+}
+
+/// Operations on temporal geometry point types (trajectories)
+interface tgeompoint-ops {
+    use types.{
+        timestamp-tz, time-period, geom-point, tgeompoint-instant,
+        tgeompoint-sequence, tfloat-sequence, tfloat-instant,
+        bounding-box, temporal-error
+    };
+
+    /// Create a tgeompoint instant
+    tgeompoint-instant-new: func(timestamp: timestamp-tz, x: f64, y: f64) -> tgeompoint-instant;
+
+    /// Create a tgeompoint sequence from instants
+    tgeompoint-sequence-new: func(
+        instants: list<tgeompoint-instant>
+    ) -> result<tgeompoint-sequence, temporal-error>;
+
+    /// Get point at a specific timestamp (with linear interpolation)
+    tgeompoint-value-at: func(seq: tgeompoint-sequence, t: timestamp-tz) -> option<geom-point>;
+
+    /// Get number of instants
+    tgeompoint-num-instants: func(seq: tgeompoint-sequence) -> u32;
+
+    /// Get time span
+    tgeompoint-time-span: func(seq: tgeompoint-sequence) -> option<time-period>;
+
+    /// Compute the length of the trajectory in coordinate units
+    tgeompoint-length: func(seq: tgeompoint-sequence) -> f64;
+
+    /// Compute average speed (length / duration)
+    tgeompoint-avg-speed: func(seq: tgeompoint-sequence) -> option<f64>;
+
+    /// Get bounding box of the trajectory
+    tgeompoint-bounding-box: func(seq: tgeompoint-sequence) -> option<bounding-box>;
+
+    /// Simplify trajectory using Douglas-Peucker algorithm
+    tgeompoint-simplify: func(
+        seq: tgeompoint-sequence,
+        epsilon: f64
+    ) -> result<tgeompoint-sequence, temporal-error>;
+
+    /// Compute distance between two trajectories at a specific timestamp
+    tgeompoint-distance-at: func(
+        seq1: tgeompoint-sequence,
+        seq2: tgeompoint-sequence,
+        t: timestamp-tz
+    ) -> option<f64>;
+
+    /// Compute distance from trajectory to a static point at a specific timestamp
+    tgeompoint-distance-to-point: func(
+        seq: tgeompoint-sequence,
+        point: geom-point,
+        t: timestamp-tz
+    ) -> option<f64>;
+
+    /// Running sum of pairwise distances along the trajectory.
+    /// Returns a tfloat-sequence with same timestamps as input, value at
+    /// instant k being the cumulative path length from instant 0 to k.
+    /// Mirrors mdb_temporal_core::TGeomPointSequence::cumulative_length.
+    tgeompoint-cumulative-length: func(seq: tgeompoint-sequence) -> option<tfloat-sequence>;
+
+    /// Per-segment azimuth (bearing) in radians.
+    /// Compass convention: 0 = north (+y), angles increase clockwise,
+    /// normalized to [0, 2π). Stepwise interpolation.
+    /// Mirrors mdb_temporal_core::TGeomPointSequence::azimuth.
+    tgeompoint-azimuth: func(seq: tgeompoint-sequence) -> option<tfloat-sequence>;
+
+    /// Per-instant angular difference (turn angle) in radians.
+    /// Positive for right turns, negative for left turns. Normalized
+    /// to [-π, π].
+    /// Mirrors mdb_temporal_core::TGeomPointSequence::angular_difference.
+    tgeompoint-angular-difference: func(seq: tgeompoint-sequence) -> option<tfloat-sequence>;
+
+    /// Count contiguous runs of consecutive instants whose pairwise
+    /// displacement (Euclidean distance between adjacent points) is at
+    /// most `displacement-eps`. Pure-distance threshold, no time component.
+    tgeompoint-num-stationary-runs-by-displacement: func(
+        seq: tgeompoint-sequence,
+        displacement-eps: f64,
+    ) -> u32;
+
+    /// Total duration (microseconds) of segments whose pairwise
+    /// displacement is at most `displacement-eps`.
+    tgeompoint-total-stationary-duration-by-displacement: func(
+        seq: tgeompoint-sequence,
+        displacement-eps: f64,
+    ) -> s64;
+
+    /// Count "moving" segments — pairs of consecutive instants whose
+    /// positions differ.
+    tgeompoint-num-moving-segments: func(seq: tgeompoint-sequence) -> u32;
+
+    /// Count direction flips — places where the trajectory's rotation
+    /// sense reverses (sign of the cross product between consecutive
+    /// movement vectors flips).
+    tgeompoint-num-direction-flips: func(seq: tgeompoint-sequence) -> u32;
+
+    /// Path tortuosity (sinuosity): total Euclidean path length divided
+    /// by the straight-line distance between first and last instants.
+    /// 1.0 for a straight path, > 1.0 for a curved one, NaN when the
+    /// straight-line distance is zero.
+    tgeompoint-tortuosity: func(seq: tgeompoint-sequence) -> f64;
+
+    /// Per-instant Euclidean speeds (distance/time at each segment),
+    /// emitted as a stepwise tfloat-sequence. Final instant duplicates
+    /// the speed of the prior segment.
+    /// Mirrors mdb_temporal_core::analytics::tgeompoint_speeds.
+    tgeompoint-speeds: func(seq: tgeompoint-sequence) -> option<tfloat-sequence>;
+
+    /// Speed statistics record: (min, max, mean) over per-segment speeds.
+    record speed-stats {
+        min: f64,
+        max: f64,
+        mean: f64,
+    }
+    /// Aggregated speed statistics. Returns None when fewer than two
+    /// distinct timestamps yield positive-duration segments.
+    tgeompoint-speed-stats: func(seq: tgeompoint-sequence) -> option<speed-stats>;
+    /// Minimum per-segment speed (m/s). 0.0 when the trajectory is too
+    /// short.
+    tgeompoint-min-speed: func(seq: tgeompoint-sequence) -> f64;
+    /// Maximum per-segment speed (m/s). 0.0 when the trajectory is too
+    /// short.
+    tgeompoint-max-speed: func(seq: tgeompoint-sequence) -> f64;
+
+    /// Count "moving" segments by displacement threshold — segments
+    /// where the pairwise distance exceeds `displacement-eps`.
+    tgeompoint-num-movement-segments-by-displacement: func(
+        seq: tgeompoint-sequence,
+        displacement-eps: f64,
+    ) -> u32;
+
+    /// Movement summary: total path length, net displacement, sinuosity.
+    record movement-summary {
+        total-length: f64,
+        displacement: f64,
+        sinuosity: f64,
+    }
+    tgeompoint-movement-summary: func(seq: tgeompoint-sequence) -> movement-summary;
+
+    /// Direction statistics record over per-segment bearings
+    /// (atan2(dy, dx) in radians).
+    record direction-stats {
+        min: f64,
+        max: f64,
+        mean: f64,
+        stddev: f64,
+    }
+    /// None when no segment has nonzero displacement.
+    tgeompoint-direction-stats: func(seq: tgeompoint-sequence) -> option<direction-stats>;
+
+    /// Composite trajectory analysis: length, duration, avg speed (m/s),
+    /// zero-displacement segment count, instant count, centroid (x, y).
+    record trajectory-analysis {
+        length: f64,
+        duration-us: s64,
+        avg-speed: f64,
+        stop-count: u32,
+        num-instants: u32,
+        centroid-x: f64,
+        centroid-y: f64,
+    }
+    tgeompoint-full-analysis: func(seq: tgeompoint-sequence) -> trajectory-analysis;
+
+    /// Per-instant great-circle speeds in m/s, emitted as a tfloat
+    /// sequence aligned with the input timestamps.
+    tgeogpoint-speeds-geodetic: func(seq: tgeompoint-sequence) -> option<tfloat-sequence>;
+
+    /// Per-segment initial bearings (geodetic) in degrees, [0, 360),
+    /// emitted as a tfloat sequence aligned with the input timestamps.
+    tgeogpoint-azimuths-geodetic: func(seq: tgeompoint-sequence) -> option<tfloat-sequence>;
+}
+
+/// Trajectory similarity and analysis operations
+interface similarity-ops {
+    use types.{tgeompoint-sequence, tfloat-sequence};
+
+    /// Compute Frechet distance between two trajectories
+    frechet-distance: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence) -> f64;
+
+    /// Compute Hausdorff distance between two trajectories
+    hausdorff-distance: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence) -> f64;
+
+    /// Compute Dynamic Time Warping distance between two trajectories
+    dtw-distance: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence) -> f64;
+}
+
+/// Pattern detection operations
+interface pattern-ops {
+    use types.{tfloat-sequence, timestamp-tz};
+
+    /// Peak detection result
+    record peak-info {
+        timestamp: timestamp-tz,
+        value: f64,
+        prominence: f64,
+    }
+
+    /// Detect peaks in a temporal float sequence
+    detect-peaks: func(seq: tfloat-sequence, min-prominence: f64) -> list<peak-info>;
+
+    /// Detect valleys in a temporal float sequence
+    detect-valleys: func(seq: tfloat-sequence, min-prominence: f64) -> list<peak-info>;
+
+    /// Trend direction
+    enum trend-direction {
+        increasing,
+        decreasing,
+        stable,
+    }
+
+    /// Detect overall trend in a sequence
+    detect-trend: func(seq: tfloat-sequence) -> trend-direction;
+
+    /// Zero-crossing event (where value sign changes).
+    record crossing-info {
+        timestamp: timestamp-tz,
+        /// true = rising (negative → non-negative), false = falling
+        rising: bool,
+    }
+
+    /// Level-crossing event (where value crosses a chosen level).
+    record level-crossing-info {
+        timestamp: timestamp-tz,
+        level: f64,
+        /// true = rising (below → at-or-above), false = falling
+        rising: bool,
+    }
+
+    /// Detect zero crossings in a sequence.
+    /// Mirrors mdb_temporal_core::tfloat::tfloat_detect_zero_crossings.
+    detect-zero-crossings: func(seq: tfloat-sequence) -> list<crossing-info>;
+
+    /// Detect crossings of an arbitrary level in a sequence.
+    /// Mirrors mdb_temporal_core::tfloat::tfloat_detect_level_crossings.
+    detect-level-crossings: func(seq: tfloat-sequence, level: f64) -> list<level-crossing-info>;
+
+}
+
+/// Serialization operations
+interface serde-ops {
+    use types.{tgeompoint-sequence, tfloat-sequence, tint-sequence};
+
+    /// Convert trajectory to GeoJSON LineString
+    tgeompoint-to-geojson: func(seq: tgeompoint-sequence) -> string;
+
+    /// Convert trajectory to GeoJSON Feature with timestamps
+    tgeompoint-to-geojson-feature: func(seq: tgeompoint-sequence) -> string;
+
+    /// Convert tfloat sequence to JSON
+    tfloat-to-json: func(seq: tfloat-sequence) -> string;
+
+    /// Convert tint sequence to JSON
+    tint-to-json: func(seq: tint-sequence) -> string;
+}
+
+/// Temporal join operations
+interface join-ops {
+    use types.{timestamp-tz, tfloat-sequence, tfloat-instant};
+
+    /// Joined pair of float values
+    record joined-float-pair {
+        timestamp: timestamp-tz,
+        left: f64,
+        right: f64,
+    }
+
+    /// Inner join two sequences on overlapping time
+    temporal-join-float: func(left: tfloat-sequence, right: tfloat-sequence) -> list<joined-float-pair>;
+
+    /// As-of join: for each left timestamp, find most recent right value
+    as-of-join-float: func(left: tfloat-sequence, right: tfloat-sequence) -> list<joined-float-pair>;
+}
+
+/// Typed join variants (W4a #557)
+///
+/// Bool/int/text variants of `temporal-join` and `as-of-join` live
+/// in a separate interface so the upstream `join-ops` instance stays
+/// shape-compatible with `mobilitydb-wasm`'s pre-W4a exports — wac
+/// plug only merges instances whose function set matches exactly,
+/// so keeping the new variants out of `join-ops` preserves the
+/// existing compose graph.
+interface typed-join-ops {
+    use types.{timestamp-tz, tint-sequence};
+    use ttext-ops.{ttext-sequence};
+    use tbool-ops.{tbool-sequence};
+
+    /// Joined pair of bool values
+    record joined-bool-pair {
+        timestamp: timestamp-tz,
+        left: bool,
+        right: bool,
+    }
+
+    /// Joined pair of int values
+    record joined-int-pair {
+        timestamp: timestamp-tz,
+        left: s64,
+        right: s64,
+    }
+
+    /// Joined pair of text values
+    record joined-text-pair {
+        timestamp: timestamp-tz,
+        left: string,
+        right: string,
+    }
+
+    temporal-join-bool: func(left: tbool-sequence, right: tbool-sequence) -> list<joined-bool-pair>;
+    temporal-join-int: func(left: tint-sequence, right: tint-sequence) -> list<joined-int-pair>;
+    temporal-join-text: func(left: ttext-sequence, right: ttext-sequence) -> list<joined-text-pair>;
+
+    as-of-join-bool: func(left: tbool-sequence, right: tbool-sequence) -> list<joined-bool-pair>;
+    as-of-join-int: func(left: tint-sequence, right: tint-sequence) -> list<joined-int-pair>;
+    as-of-join-text: func(left: ttext-sequence, right: ttext-sequence) -> list<joined-text-pair>;
+}
+
+/// Arrow integration operations
+/// Enables interoperability with Apache Arrow ecosystem via IPC and Parquet formats
+interface arrow-ops {
+    use types.{tfloat-sequence, tint-sequence, tgeompoint-sequence, temporal-error};
+
+    /// Arrow IPC compression options
+    enum ipc-compression {
+        /// No compression
+        none,
+        /// LZ4 Frame compression
+        lz4,
+        /// ZSTD compression
+        zstd,
+    }
+
+    /// Parquet compression options
+    enum parquet-compression {
+        /// No compression
+        uncompressed,
+        /// Snappy compression (fast)
+        snappy,
+        /// LZ4 compression
+        lz4,
+        /// ZSTD compression (good compression ratio)
+        zstd,
+        /// Gzip compression
+        gzip,
+    }
+
+    /// Error type for arrow operations
+    variant arrow-error {
+        /// Invalid schema for temporal type
+        invalid-schema(string),
+        /// Failed to parse Arrow data
+        parse-error(string),
+        /// I/O error
+        io-error(string),
+        /// Compression error
+        compression-error(string),
+    }
+
+    // ========== TFloat Arrow Operations ==========
+
+    /// Convert temporal float sequence to Arrow IPC stream bytes
+    /// Schema: timestamp (Int64, microseconds), value (Float64)
+    tfloat-to-ipc: func(seq: tfloat-sequence, compression: ipc-compression) -> list<u8>;
+
+    /// Convert Arrow IPC stream bytes to temporal float sequence
+    /// Expects schema with timestamp (Int64) and value (Float64) columns
+    tfloat-from-ipc: func(data: list<u8>) -> result<tfloat-sequence, arrow-error>;
+
+    /// Convert temporal float sequence to Parquet bytes
+    tfloat-to-parquet: func(seq: tfloat-sequence, compression: parquet-compression) -> list<u8>;
+
+    /// Convert Parquet bytes to temporal float sequence
+    tfloat-from-parquet: func(data: list<u8>) -> result<tfloat-sequence, arrow-error>;
+
+    // ========== TInt Arrow Operations ==========
+
+    /// Convert temporal int sequence to Arrow IPC stream bytes
+    /// Schema: timestamp (Int64, microseconds), value (Int64)
+    tint-to-ipc: func(seq: tint-sequence, compression: ipc-compression) -> list<u8>;
+
+    /// Convert Arrow IPC stream bytes to temporal int sequence
+    tint-from-ipc: func(data: list<u8>) -> result<tint-sequence, arrow-error>;
+
+    /// Convert temporal int sequence to Parquet bytes
+    tint-to-parquet: func(seq: tint-sequence, compression: parquet-compression) -> list<u8>;
+
+    /// Convert Parquet bytes to temporal int sequence
+    tint-from-parquet: func(data: list<u8>) -> result<tint-sequence, arrow-error>;
+
+    // ========== TGeomPoint Arrow Operations ==========
+
+    /// Convert trajectory to Arrow IPC stream bytes
+    /// Schema: timestamp (Int64), x (Float64), y (Float64)
+    tgeompoint-to-ipc: func(seq: tgeompoint-sequence, compression: ipc-compression) -> list<u8>;
+
+    /// Convert Arrow IPC stream bytes to trajectory
+    tgeompoint-from-ipc: func(data: list<u8>) -> result<tgeompoint-sequence, arrow-error>;
+
+    /// Convert trajectory to Parquet bytes
+    tgeompoint-to-parquet: func(seq: tgeompoint-sequence, compression: parquet-compression) -> list<u8>;
+
+    /// Convert Parquet bytes to trajectory
+    tgeompoint-from-parquet: func(data: list<u8>) -> result<tgeompoint-sequence, arrow-error>;
+
+    // ========== Batch Operations ==========
+
+    /// Convert multiple temporal float sequences to a single Parquet file
+    /// Each sequence becomes a row group with sequence_id column
+    tfloat-batch-to-parquet: func(sequences: list<tuple<string, tfloat-sequence>>, compression: parquet-compression) -> list<u8>;
+
+    /// Convert a Parquet file with multiple row groups to temporal float sequences
+    /// Returns list of (sequence_id, sequence) tuples
+    tfloat-batch-from-parquet: func(data: list<u8>) -> result<list<tuple<string, tfloat-sequence>>, arrow-error>;
+
+    /// Convert multiple trajectories to a single Parquet file
+    tgeompoint-batch-to-parquet: func(sequences: list<tuple<string, tgeompoint-sequence>>, compression: parquet-compression) -> list<u8>;
+
+    /// Convert a Parquet file to multiple trajectories
+    tgeompoint-batch-from-parquet: func(data: list<u8>) -> result<list<tuple<string, tgeompoint-sequence>>, arrow-error>;
+
+    // ========== Schema Introspection ==========
+
+    /// Get the Arrow schema for temporal float sequences as JSON
+    tfloat-arrow-schema: func() -> string;
+
+    /// Get the Arrow schema for temporal int sequences as JSON
+    tint-arrow-schema: func() -> string;
+
+    /// Get the Arrow schema for trajectory sequences as JSON
+    tgeompoint-arrow-schema: func() -> string;
+}
+
+/// Spatiotemporal bounding box (STBox) operations.
+///
+/// An STBox combines spatial bounds (xmin..xmax, ymin..ymax) with
+/// temporal bounds (tmin..tmax) — the foundational shape for
+/// spatial indexing and bounds-based filtering of temporal data.
+interface stbox-ops {
+    use types.{timestamp-tz, time-period};
+
+    /// A spatiotemporal bounding box. All bounds inclusive; `new`
+    /// validates that mins ≤ maxes for every dimension.
+    record stbox {
+        xmin: f64,
+        ymin: f64,
+        xmax: f64,
+        ymax: f64,
+        tmin: timestamp-tz,
+        tmax: timestamp-tz,
+    }
+
+    /// Construct an STBox; returns none if bounds are invalid
+    /// (any min > max).
+    stbox-make: func(
+        xmin: f64, ymin: f64, xmax: f64, ymax: f64,
+        tmin: timestamp-tz, tmax: timestamp-tz,
+    ) -> option<stbox>;
+
+    /// Build an STBox covering only the given spatial extent;
+    /// returns none if xmin > xmax or ymin > ymax. The temporal
+    /// bounds are set to the epoch sentinel pair (caller can later
+    /// expand-temporal).
+    stbox-from-spatial: func(
+        xmin: f64, ymin: f64, xmax: f64, ymax: f64,
+    ) -> option<stbox>;
+
+    /// Build an STBox covering only the given temporal extent.
+    /// Spatial bounds are set to +/-infinity sentinels.
+    stbox-from-temporal: func(period: time-period) -> stbox;
+
+    /// Field accessors.
+    stbox-xmin: func(b: stbox) -> f64;
+    stbox-ymin: func(b: stbox) -> f64;
+    stbox-xmax: func(b: stbox) -> f64;
+    stbox-ymax: func(b: stbox) -> f64;
+    stbox-tmin: func(b: stbox) -> timestamp-tz;
+    stbox-tmax: func(b: stbox) -> timestamp-tz;
+
+    /// Spatial / temporal measurements.
+    stbox-width: func(b: stbox) -> f64;
+    stbox-height: func(b: stbox) -> f64;
+    stbox-area: func(b: stbox) -> f64;
+    stbox-duration: func(b: stbox) -> s64;
+
+    /// Centroids.
+    stbox-center-x: func(b: stbox) -> f64;
+    stbox-center-y: func(b: stbox) -> f64;
+    stbox-center-time: func(b: stbox) -> timestamp-tz;
+
+    /// Point-in-box test.
+    stbox-contains-point: func(
+        b: stbox, x: f64, y: f64, t: timestamp-tz,
+    ) -> bool;
+
+    /// Box-vs-box predicates.
+    stbox-contains: func(a: stbox, b: stbox) -> bool;
+    stbox-overlaps: func(a: stbox, b: stbox) -> bool;
+    stbox-spatially-adjacent: func(a: stbox, b: stbox) -> bool;
+    stbox-temporally-adjacent: func(a: stbox, b: stbox) -> bool;
+
+    /// Distances between two boxes.
+    stbox-spatial-distance: func(a: stbox, b: stbox) -> f64;
+    stbox-temporal-distance: func(a: stbox, b: stbox) -> s64;
+
+    /// Transforms (return a new box).
+    stbox-expand-spatial: func(b: stbox, distance: f64) -> stbox;
+    stbox-expand-temporal: func(b: stbox, duration-micros: s64) -> stbox;
+    stbox-shift-spatial: func(b: stbox, dx: f64, dy: f64) -> stbox;
+    stbox-shift-temporal: func(b: stbox, duration-micros: s64) -> stbox;
+    stbox-scale-spatial: func(b: stbox, factor: f64) -> stbox;
+    stbox-scale-temporal: func(b: stbox, factor: f64) -> stbox;
+
+    /// Set operations: union always succeeds; intersection returns
+    /// none when the boxes don't overlap.
+    stbox-union: func(a: stbox, b: stbox) -> stbox;
+    stbox-intersection: func(a: stbox, b: stbox) -> option<stbox>;
+
+    // ---- Z3: text codecs ----
+    stbox-to-text:   func(b: stbox) -> string;
+    stbox-from-text: func(s: string) -> option<stbox>;
+
+    /// 3D variant. Bounds use i64-micros for t so a single i64 pair
+    /// reaches the host without re-deriving TimestampTz.
+    record stbox3d {
+        xmin: f64, ymin: f64, xmax: f64, ymax: f64,
+        zmin: f64, zmax: f64,
+        tmin: s64, tmax: s64,
+    }
+    stbox3d-to-text:   func(b: stbox3d) -> string;
+    stbox3d-from-text: func(s: string) -> option<stbox3d>;
+
+    /// α10: TBox — value-time box (no spatial dimensions).
+    /// Layout: `[vmin f64][vmax f64][tmin i64][tmax i64]` (32 bytes).
+    record tbox {
+        vmin: f64, vmax: f64,
+        tmin: s64, tmax: s64,
+    }
+    tbox-to-text:   func(b: tbox) -> string;
+    tbox-from-text: func(s: string) -> option<tbox>;
+}
+
+/// Spatiotemporal indexing — bulk-query R-tree operations.
+///
+/// Each function takes a flat list of entries and a query, builds
+/// an rstar R-tree internally, and returns the matching entries.
+/// Stateless by design: no persistent index handles, no pooled
+/// instances required. Trades per-call build cost for ABI
+/// simplicity — fine for SQL workflows that aggregate rows into
+/// an entries blob and run a handful of queries against it.
+interface stindex-ops {
+    use types.{timestamp-tz, time-period};
+    use stbox-ops.{stbox};
+
+    /// An entry in the spatiotemporal index.
+    /// `sequence-id` identifies the source row; the rest is the
+    /// spatial+temporal bounding box used for the R-tree.
+    /// `segment-index` is optional metadata that callers can
+    /// ignore (e.g. when each entry already covers a whole row).
+    record stindex-entry {
+        sequence-id: u64,
+        segment-index: option<u64>,
+        min-x: f64,
+        min-y: f64,
+        max-x: f64,
+        max-y: f64,
+        start-time: timestamp-tz,
+        end-time: timestamp-tz,
+    }
+
+    /// All entries whose spatial+temporal bounds overlap the
+    /// query stbox.
+    stindex-find-in-stbox: func(
+        entries: list<stindex-entry>,
+        query: stbox,
+    ) -> list<stindex-entry>;
+
+    /// All entries whose time range overlaps the period (any
+    /// spatial extent).
+    stindex-find-in-period: func(
+        entries: list<stindex-entry>,
+        period: time-period,
+    ) -> list<stindex-entry>;
+
+    /// All entries whose spatial bbox intersects (xmin..xmax, ymin..ymax),
+    /// regardless of time.
+    stindex-find-in-spatial: func(
+        entries: list<stindex-entry>,
+        xmin: f64, ymin: f64, xmax: f64, ymax: f64,
+    ) -> list<stindex-entry>;
+
+    /// The k entries closest (by spatial+temporal distance) to
+    /// (x, y, t). Returns fewer than k entries only if the input
+    /// list has fewer than k items.
+    stindex-find-knn: func(
+        entries: list<stindex-entry>,
+        x: f64, y: f64, t: timestamp-tz, k: u32,
+    ) -> list<stindex-entry>;
+
+    /// Count entries overlapping the query stbox. Faster than
+    /// stindex-find-in-stbox + list-length because it doesn't
+    /// materialise the result list.
+    stindex-count-in-stbox: func(
+        entries: list<stindex-entry>,
+        query: stbox,
+    ) -> u32;
+}
+
+/// Temporal text (ttext) — sequences of (timestamp, string) instants
+/// with stepwise interpolation. Phase 1 of the WIT expansion arc.
+interface ttext-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    record ttext-instant {
+        timestamp: timestamp-tz,
+        value: string,
+    }
+
+    record ttext-sequence {
+        instants: list<ttext-instant>,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    /// Constructors
+    ttext-instant-new: func(t: timestamp-tz, value: string) -> ttext-instant;
+    ttext-sequence-new: func(instants: list<ttext-instant>) -> result<ttext-sequence, temporal-error>;
+
+    /// Accessors
+    ttext-num-instants: func(seq: ttext-sequence) -> u32;
+    ttext-value-at: func(seq: ttext-sequence, t: timestamp-tz) -> option<string>;
+    ttext-start-value: func(seq: ttext-sequence) -> option<string>;
+    ttext-end-value: func(seq: ttext-sequence) -> option<string>;
+    ttext-start-timestamp: func(seq: ttext-sequence) -> option<timestamp-tz>;
+    ttext-end-timestamp: func(seq: ttext-sequence) -> option<timestamp-tz>;
+    ttext-time-span: func(seq: ttext-sequence) -> option<time-period>;
+    ttext-duration: func(seq: ttext-sequence) -> s64;
+
+    /// Restrictions
+    ttext-at-period: func(seq: ttext-sequence, period: time-period) -> option<ttext-sequence>;
+    ttext-at-value: func(seq: ttext-sequence, value: string) -> option<ttext-sequence>;
+    ttext-minus-value: func(seq: ttext-sequence, value: string) -> option<ttext-sequence>;
+
+    /// Predicates
+    ttext-ever-eq: func(seq: ttext-sequence, value: string) -> bool;
+    ttext-always-eq: func(seq: ttext-sequence, value: string) -> bool;
+
+    /// String transforms (each returns a new ttext-sequence)
+    ttext-upper: func(seq: ttext-sequence) -> ttext-sequence;
+    ttext-lower: func(seq: ttext-sequence) -> ttext-sequence;
+    ttext-ltrim: func(seq: ttext-sequence) -> ttext-sequence;
+    ttext-rtrim: func(seq: ttext-sequence) -> ttext-sequence;
+    ttext-btrim: func(seq: ttext-sequence) -> ttext-sequence;
+    ttext-concat-str: func(seq: ttext-sequence, suffix: string) -> ttext-sequence;
+    ttext-prepend-str: func(prefix: string, seq: ttext-sequence) -> ttext-sequence;
+    ttext-left: func(seq: ttext-sequence, n: u32) -> ttext-sequence;
+    ttext-right: func(seq: ttext-sequence, n: u32) -> ttext-sequence;
+    ttext-concat: func(seq1: ttext-sequence, seq2: ttext-sequence) -> option<ttext-sequence>;
+
+    /// Serde
+    ttext-to-json: func(seq: ttext-sequence) -> string;
+    /// CSV encode (one row per instant).
+    ttext-to-csv: func(seq: ttext-sequence) -> string;
+    /// CSV decode. Returns None on parse failure.
+    ttext-from-csv: func(csv: string) -> option<ttext-sequence>;
+}
+
+/// Temporal booleans (tbool) — phase 2 of the WIT expansion arc.
+interface tbool-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    record tbool-instant {
+        timestamp: timestamp-tz,
+        value: bool,
+    }
+
+    record tbool-sequence {
+        instants: list<tbool-instant>,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    /// Constructors
+    tbool-instant-new: func(t: timestamp-tz, value: bool) -> tbool-instant;
+    tbool-sequence-new: func(instants: list<tbool-instant>) -> result<tbool-sequence, temporal-error>;
+
+    /// Accessors
+    tbool-num-instants: func(seq: tbool-sequence) -> u32;
+    tbool-value-at: func(seq: tbool-sequence, t: timestamp-tz) -> option<bool>;
+    tbool-start-value: func(seq: tbool-sequence) -> option<bool>;
+    tbool-end-value: func(seq: tbool-sequence) -> option<bool>;
+    tbool-start-timestamp: func(seq: tbool-sequence) -> option<timestamp-tz>;
+    tbool-end-timestamp: func(seq: tbool-sequence) -> option<timestamp-tz>;
+    tbool-time-span: func(seq: tbool-sequence) -> option<time-period>;
+    tbool-duration: func(seq: tbool-sequence) -> s64;
+
+    /// Predicates
+    tbool-ever-true: func(seq: tbool-sequence) -> bool;
+    tbool-always-true: func(seq: tbool-sequence) -> bool;
+    tbool-ever-false: func(seq: tbool-sequence) -> bool;
+    tbool-always-false: func(seq: tbool-sequence) -> bool;
+
+    /// Counts
+    tbool-count-true: func(seq: tbool-sequence) -> u32;
+    tbool-count-false: func(seq: tbool-sequence) -> u32;
+    /// Count state transitions (consecutive instants with different values).
+    tbool-count-changes: func(seq: tbool-sequence) -> u32;
+
+    /// Restrictions
+    tbool-at-period: func(seq: tbool-sequence, period: time-period) -> option<tbool-sequence>;
+    tbool-at-true: func(seq: tbool-sequence) -> option<tbool-sequence>;
+    tbool-at-false: func(seq: tbool-sequence) -> option<tbool-sequence>;
+
+    /// Logical transforms
+    tbool-not: func(seq: tbool-sequence) -> tbool-sequence;
+    tbool-and: func(seq1: tbool-sequence, seq2: tbool-sequence) -> option<tbool-sequence>;
+    tbool-or: func(seq1: tbool-sequence, seq2: tbool-sequence) -> option<tbool-sequence>;
+
+    /// Serde
+    tbool-to-json: func(seq: tbool-sequence) -> string;
+    /// CSV encode (one row per instant). Default options.
+    tbool-to-csv: func(seq: tbool-sequence) -> string;
+    /// CSV decode. Returns None on parse failure.
+    tbool-from-csv: func(csv: string) -> option<tbool-sequence>;
+}
+
+/// Span types (range types) — phase 3 of WIT expansion. Three
+/// element-type variants share an identical {lower, upper,
+/// lower-inc, upper-inc} shape so each function appears thrice.
+interface spans-ops {
+    record int-span { lower: s64, upper: s64, lower-inc: bool, upper-inc: bool }
+    record float-span { lower: f64, upper: f64, lower-inc: bool, upper-inc: bool }
+    record date-span { lower: s32, upper: s32, lower-inc: bool, upper-inc: bool }
+
+    // int-span
+    int-span-make: func(lower: s64, upper: s64, lower-inc: bool, upper-inc: bool) -> option<int-span>;
+    int-span-width: func(span: int-span) -> s64;
+    int-span-contains: func(span: int-span, value: s64) -> bool;
+    int-span-contains-span: func(a: int-span, b: int-span) -> bool;
+    int-span-overlaps: func(a: int-span, b: int-span) -> bool;
+    int-span-adjacent: func(a: int-span, b: int-span) -> bool;
+    int-span-union: func(a: int-span, b: int-span) -> option<int-span>;
+    int-span-intersection: func(a: int-span, b: int-span) -> option<int-span>;
+    int-span-shift: func(span: int-span, delta: s64) -> int-span;
+    int-span-expand: func(span: int-span, delta: s64) -> option<int-span>;
+
+    // float-span
+    float-span-make: func(lower: f64, upper: f64, lower-inc: bool, upper-inc: bool) -> option<float-span>;
+    float-span-width: func(span: float-span) -> f64;
+    float-span-contains: func(span: float-span, value: f64) -> bool;
+    float-span-contains-span: func(a: float-span, b: float-span) -> bool;
+    float-span-overlaps: func(a: float-span, b: float-span) -> bool;
+    float-span-adjacent: func(a: float-span, b: float-span) -> bool;
+    float-span-union: func(a: float-span, b: float-span) -> option<float-span>;
+    float-span-intersection: func(a: float-span, b: float-span) -> option<float-span>;
+    float-span-shift: func(span: float-span, delta: f64) -> float-span;
+    float-span-expand: func(span: float-span, delta: f64) -> option<float-span>;
+
+    // date-span
+    date-span-make: func(lower: s32, upper: s32, lower-inc: bool, upper-inc: bool) -> option<date-span>;
+    date-span-width: func(span: date-span) -> s32;
+    date-span-contains: func(span: date-span, value: s32) -> bool;
+    date-span-contains-span: func(a: date-span, b: date-span) -> bool;
+    date-span-overlaps: func(a: date-span, b: date-span) -> bool;
+    date-span-adjacent: func(a: date-span, b: date-span) -> bool;
+    date-span-union: func(a: date-span, b: date-span) -> option<date-span>;
+    date-span-intersection: func(a: date-span, b: date-span) -> option<date-span>;
+    date-span-shift: func(span: date-span, delta: s32) -> date-span;
+    date-span-expand: func(span: date-span, delta: s32) -> option<date-span>;
+
+    // ---- Z3: text codecs ----
+    int-span-to-text:    func(s: int-span) -> string;
+    int-span-from-text:  func(s: string) -> option<int-span>;
+    float-span-to-text:  func(s: float-span) -> string;
+    float-span-from-text: func(s: string) -> option<float-span>;
+    date-span-to-text:   func(s: date-span) -> string;
+    date-span-from-text: func(s: string) -> option<date-span>;
+    // tstz-span (TimePeriod) uses i64-micros bounds; reuses int-span shape on the wire.
+    tstz-span-to-text:   func(s: int-span) -> string;
+    tstz-span-from-text: func(s: string) -> option<int-span>;
+
+    // SpanSet text codecs — each is a list<inner-span>.
+    int-spanset-to-text:    func(ss: list<int-span>) -> string;
+    int-spanset-from-text:  func(s: string) -> option<list<int-span>>;
+    float-spanset-to-text:  func(ss: list<float-span>) -> string;
+    float-spanset-from-text: func(s: string) -> option<list<float-span>>;
+    date-spanset-to-text:   func(ss: list<date-span>) -> string;
+    date-spanset-from-text: func(s: string) -> option<list<date-span>>;
+    tstz-spanset-to-text:   func(ss: list<int-span>) -> string;
+    tstz-spanset-from-text: func(s: string) -> option<list<int-span>>;
+}
+
+/// Set types — phase 4. Sorted distinct collections of int/float/date.
+interface sets-ops {
+    int-set-make: func(values: list<s64>) -> list<s64>;  // returns deduped+sorted
+    int-set-contains: func(values: list<s64>, value: s64) -> bool;
+    int-set-len: func(values: list<s64>) -> u32;
+    int-set-union: func(a: list<s64>, b: list<s64>) -> list<s64>;
+    int-set-intersection: func(a: list<s64>, b: list<s64>) -> list<s64>;
+    int-set-minus: func(a: list<s64>, b: list<s64>) -> list<s64>;
+
+    float-set-make: func(values: list<f64>) -> list<f64>;
+    float-set-contains: func(values: list<f64>, value: f64) -> bool;
+    float-set-len: func(values: list<f64>) -> u32;
+    float-set-union: func(a: list<f64>, b: list<f64>) -> list<f64>;
+    float-set-intersection: func(a: list<f64>, b: list<f64>) -> list<f64>;
+    float-set-minus: func(a: list<f64>, b: list<f64>) -> list<f64>;
+
+    date-set-make: func(values: list<s32>) -> list<s32>;
+    date-set-contains: func(values: list<s32>, value: s32) -> bool;
+    date-set-len: func(values: list<s32>) -> u32;
+    date-set-union: func(a: list<s32>, b: list<s32>) -> list<s32>;
+    date-set-intersection: func(a: list<s32>, b: list<s32>) -> list<s32>;
+    date-set-minus: func(a: list<s32>, b: list<s32>) -> list<s32>;
+
+    // ---- Z3: text codecs ----
+    int-set-to-text:    func(values: list<s64>) -> string;
+    int-set-from-text:  func(s: string) -> option<list<s64>>;
+    float-set-to-text:  func(values: list<f64>) -> string;
+    float-set-from-text: func(s: string) -> option<list<f64>>;
+    date-set-to-text:   func(values: list<s32>) -> string;
+    date-set-from-text: func(s: string) -> option<list<s32>>;
+    // TSTZ set — list<i64-micros>
+    tstz-set-to-text:   func(values: list<s64>) -> string;
+    tstz-set-from-text: func(s: string) -> option<list<s64>>;
+
+    // α1: TEXTSET — `TEXTSET{"a", "b\\c", ...}` with `\\` + `"` escaping.
+    text-set-to-text:   func(values: list<string>) -> string;
+    text-set-from-text: func(s: string) -> option<list<string>>;
+}
+
+/// Span sets — phase 5. Sorted disjoint collections of spans.
+interface spansets-ops {
+    use spans-ops.{int-span, float-span, date-span};
+
+    int-spanset-num-spans: func(spans: list<int-span>) -> u32;
+    int-spanset-contains: func(spans: list<int-span>, value: s64) -> bool;
+    int-spanset-overlaps: func(a: list<int-span>, b: list<int-span>) -> bool;
+    int-spanset-union: func(a: list<int-span>, b: list<int-span>) -> list<int-span>;
+    int-spanset-intersection: func(a: list<int-span>, b: list<int-span>) -> list<int-span>;
+    int-spanset-minus: func(a: list<int-span>, b: list<int-span>) -> list<int-span>;
+    int-spanset-width: func(spans: list<int-span>) -> s64;
+
+    float-spanset-num-spans: func(spans: list<float-span>) -> u32;
+    float-spanset-contains: func(spans: list<float-span>, value: f64) -> bool;
+    float-spanset-overlaps: func(a: list<float-span>, b: list<float-span>) -> bool;
+    float-spanset-union: func(a: list<float-span>, b: list<float-span>) -> list<float-span>;
+    float-spanset-intersection: func(a: list<float-span>, b: list<float-span>) -> list<float-span>;
+    float-spanset-minus: func(a: list<float-span>, b: list<float-span>) -> list<float-span>;
+    float-spanset-width: func(spans: list<float-span>) -> f64;
+
+    date-spanset-num-spans: func(spans: list<date-span>) -> u32;
+    date-spanset-contains: func(spans: list<date-span>, value: s32) -> bool;
+    date-spanset-overlaps: func(a: list<date-span>, b: list<date-span>) -> bool;
+    date-spanset-union: func(a: list<date-span>, b: list<date-span>) -> list<date-span>;
+    date-spanset-intersection: func(a: list<date-span>, b: list<date-span>) -> list<date-span>;
+    date-spanset-minus: func(a: list<date-span>, b: list<date-span>) -> list<date-span>;
+    date-spanset-width: func(spans: list<date-span>) -> s32;
+}
+
+/// 3D temporal geometry points — phase 6.
+interface tgeompoint3d-ops {
+    use types.{timestamp-tz, time-period, tfloat-sequence, temporal-error};
+
+    record geom-point3d { x: f64, y: f64, z: f64 }
+    record tgeompoint3d-instant { timestamp: timestamp-tz, point: geom-point3d }
+    record tgeompoint3d-sequence {
+        instants: list<tgeompoint3d-instant>,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    tgeompoint3d-instant-new: func(t: timestamp-tz, x: f64, y: f64, z: f64) -> tgeompoint3d-instant;
+    tgeompoint3d-sequence-new: func(instants: list<tgeompoint3d-instant>) -> result<tgeompoint3d-sequence, temporal-error>;
+    tgeompoint3d-num-instants: func(seq: tgeompoint3d-sequence) -> u32;
+    tgeompoint3d-value-at-x: func(seq: tgeompoint3d-sequence, t: timestamp-tz) -> option<f64>;
+    tgeompoint3d-value-at-y: func(seq: tgeompoint3d-sequence, t: timestamp-tz) -> option<f64>;
+    tgeompoint3d-value-at-z: func(seq: tgeompoint3d-sequence, t: timestamp-tz) -> option<f64>;
+    tgeompoint3d-length: func(seq: tgeompoint3d-sequence) -> f64;
+    tgeompoint3d-planar-length: func(seq: tgeompoint3d-sequence) -> f64;
+    tgeompoint3d-avg-speed: func(seq: tgeompoint3d-sequence) -> option<f64>;
+    tgeompoint3d-frechet-distance: func(seq1: tgeompoint3d-sequence, seq2: tgeompoint3d-sequence) -> f64;
+    tgeompoint3d-hausdorff-distance: func(seq1: tgeompoint3d-sequence, seq2: tgeompoint3d-sequence) -> f64;
+    tgeompoint3d-dtw-distance: func(seq1: tgeompoint3d-sequence, seq2: tgeompoint3d-sequence) -> f64;
+    tgeompoint3d-distance-to-point: func(seq: tgeompoint3d-sequence, x: f64, y: f64, z: f64, t: timestamp-tz) -> option<f64>;
+    tgeompoint3d-time-span: func(seq: tgeompoint3d-sequence) -> option<time-period>;
+
+    /// Cumulative 3D length as a tfloat-sequence aligned to input timestamps.
+    tgeompoint3d-cumulative-length: func(seq: tgeompoint3d-sequence) -> option<tfloat-sequence>;
+    /// Per-instant 3D speed (m/s); stepwise sequence with duplicated-last.
+    tgeompoint3d-speeds: func(seq: tgeompoint3d-sequence) -> option<tfloat-sequence>;
+    /// Per-instant vertical speed (Δz / Δt), stepwise.
+    tgeompoint3d-vertical-speed: func(seq: tgeompoint3d-sequence) -> option<tfloat-sequence>;
+    /// Per-segment 2D bearing (degrees) clamped to [0, 360).
+    tgeompoint3d-azimuth: func(seq: tgeompoint3d-sequence) -> option<tfloat-sequence>;
+    /// Per-segment climb angle (radians); atan2(Δz, horizontal distance).
+    tgeompoint3d-pitch: func(seq: tgeompoint3d-sequence) -> option<tfloat-sequence>;
+    /// Total positive altitude change (sum of positive Δz).
+    tgeompoint3d-total-climb: func(seq: tgeompoint3d-sequence) -> f64;
+    /// Total negative altitude change as positive value.
+    tgeompoint3d-total-descent: func(seq: tgeompoint3d-sequence) -> f64;
+    /// Average climb rate (total climb / duration seconds).
+    tgeompoint3d-avg-climb-rate: func(seq: tgeompoint3d-sequence) -> option<f64>;
+    /// Average descent rate (total descent / duration seconds).
+    tgeompoint3d-avg-descent-rate: func(seq: tgeompoint3d-sequence) -> option<f64>;
+
+    /// W9: NetworkGraph operations via a text-edges constructor.
+    /// Edge-list format: `src,tgt,cost[,bidi];...` where bidi
+    /// defaults to 1. Returns None when the text can't be parsed.
+    /// The resulting NetworkGraph is rebuilt per call (no shared
+    /// state); fine for small graphs / one-shot SQL queries.
+    network-distance-via-edges: func(edges: string, src: s64, tgt: s64) -> option<f64>;
+    network-shortest-path-via-edges: func(edges: string, src: s64, tgt: s64) -> list<s64>;
+
+    /// X6: persistent NetworkGraph blob type. Build the graph once
+    /// (from a text edge list) and serialize; subsequent queries pass
+    /// the Binary blob and skip re-parsing.
+    network-graph-build-from-edges: func(edges: string) -> list<u8>;
+    network-distance-via-graph: func(graph: list<u8>, src: s64, tgt: s64) -> option<f64>;
+    network-shortest-path-via-graph: func(graph: list<u8>, src: s64, tgt: s64) -> list<s64>;
+
+    /// Parse a 3D temporal point sequence from EWKT
+    /// (`[POINT Z(x y z)@ts, ...]`). Returns None on parse failure.
+    tgeompoint3d-from-ewkt: func(s: string) -> option<tgeompoint3d-sequence>;
+
+    /// Serialize a 3D temporal point sequence to EWKT.
+    tgeompoint3d-to-ewkt: func(seq: tgeompoint3d-sequence) -> string;
+
+    /// CSV encode (timestamp,x,y,z one row per instant).
+    tgeompoint3d-to-csv: func(seq: tgeompoint3d-sequence) -> string;
+    /// CSV decode.
+    tgeompoint3d-from-csv: func(csv: string) -> option<tgeompoint3d-sequence>;
+}
+
+interface tpose-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    record pose2d { x: f64, y: f64, orientation: f64 }
+    record tpose-instant { timestamp: timestamp-tz, pose: pose2d }
+    record tpose-sequence {
+        instants: list<tpose-instant>,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    tpose-instant-new: func(t: timestamp-tz, x: f64, y: f64, orientation: f64) -> tpose-instant;
+    tpose-sequence-new: func(instants: list<tpose-instant>) -> result<tpose-sequence, temporal-error>;
+    tpose-num-instants: func(seq: tpose-sequence) -> u32;
+    tpose-pose-at-x: func(seq: tpose-sequence, t: timestamp-tz) -> option<f64>;
+    tpose-pose-at-y: func(seq: tpose-sequence, t: timestamp-tz) -> option<f64>;
+    tpose-pose-at-orientation: func(seq: tpose-sequence, t: timestamp-tz) -> option<f64>;
+    tpose-path-length: func(seq: tpose-sequence) -> f64;
+    tpose-total-rotation: func(seq: tpose-sequence) -> f64;
+    tpose-avg-orientation: func(seq: tpose-sequence) -> option<f64>;
+    tpose-nearest-approach-point: func(seq: tpose-sequence, px: f64, py: f64) -> option<f64>;
+    tpose-nearest-approach: func(seq1: tpose-sequence, seq2: tpose-sequence) -> option<f64>;
+    tpose-time-span: func(seq: tpose-sequence) -> option<time-period>;
+
+    // ---- Z2: EWKT codecs ----
+    tpose-to-ewkt:   func(seq: tpose-sequence) -> string;
+    tpose-from-ewkt: func(s: string) -> option<tpose-sequence>;
+}
+
+interface tcbuffer-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    record cbuffer { x: f64, y: f64, radius: f64 }
+    record tcbuffer-instant { timestamp: timestamp-tz, cbuffer: cbuffer }
+    record tcbuffer-sequence {
+        instants: list<tcbuffer-instant>,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    tcbuffer-instant-new: func(t: timestamp-tz, x: f64, y: f64, radius: f64) -> tcbuffer-instant;
+    tcbuffer-sequence-new: func(instants: list<tcbuffer-instant>) -> result<tcbuffer-sequence, temporal-error>;
+    tcbuffer-num-instants: func(seq: tcbuffer-sequence) -> u32;
+    tcbuffer-radius-at: func(seq: tcbuffer-sequence, t: timestamp-tz) -> option<f64>;
+    tcbuffer-x-at: func(seq: tcbuffer-sequence, t: timestamp-tz) -> option<f64>;
+    tcbuffer-y-at: func(seq: tcbuffer-sequence, t: timestamp-tz) -> option<f64>;
+    tcbuffer-min-radius: func(seq: tcbuffer-sequence) -> option<f64>;
+    tcbuffer-max-radius: func(seq: tcbuffer-sequence) -> option<f64>;
+    tcbuffer-area-at: func(seq: tcbuffer-sequence, t: timestamp-tz) -> option<f64>;
+    tcbuffer-time-span: func(seq: tcbuffer-sequence) -> option<time-period>;
+
+    // ---- Z2: EWKT codecs ----
+    tcbuffer-to-ewkt:   func(seq: tcbuffer-sequence) -> string;
+    tcbuffer-from-ewkt: func(s: string) -> option<tcbuffer-sequence>;
+}
+
+interface near-done-ops {
+    use stbox-ops.{stbox};
+    use spans-ops.{int-span, float-span};
+
+    // stbox closure
+    stbox-adjacent: func(a: stbox, b: stbox) -> bool;
+    stbox-contained-by: func(a: stbox, b: stbox) -> bool;
+    stbox-same: func(a: stbox, b: stbox) -> bool;
+    stbox-transform: func(b: stbox, dx: f64, dy: f64, dt-us: s64) -> stbox;
+
+    // span bucket-list helpers (intspan + floatspan)
+    intspan-bucket-list:   func(s: int-span, size: s64, origin: s64) -> list<tuple<s64, s64>>;
+    floatspan-bucket-list: func(s: float-span, size: f64, origin: f64) -> list<tuple<f64, f64>>;
+
+    // Set gaps + scale (existing intset/dateset gaps, plus floatset gaps + scale)
+    floatset-gaps: func(values: list<f64>) -> list<tuple<f64, f64>>;
+    dateset-successor: func(values: list<s32>) -> list<s32>;
+
+    // Datespanset basics: u32 count + count * (i32 lo + i32 hi)
+    datespanset-make: func(spans: list<tuple<s32, s32>>) -> list<tuple<s32, s32>>;
+    datespanset-lower: func(spans: list<tuple<s32, s32>>) -> option<s32>;
+    datespanset-upper: func(spans: list<tuple<s32, s32>>) -> option<s32>;
+}
+
+interface temporal-relations-ops {
+    use tstzspan-ops.{tstzspan};
+
+    // Allen interval relations on two TimePeriod-shaped spans.
+    temporal-contains: func(a: tstzspan, b: tstzspan) -> bool;
+    temporal-during:   func(a: tstzspan, b: tstzspan) -> bool;
+    temporal-overlaps: func(a: tstzspan, b: tstzspan) -> bool;
+    temporal-meets:    func(a: tstzspan, b: tstzspan) -> bool;
+    temporal-starts:   func(a: tstzspan, b: tstzspan) -> bool;
+    temporal-finishes: func(a: tstzspan, b: tstzspan) -> bool;
+    temporal-precedes: func(a: tstzspan, b: tstzspan) -> bool;
+    temporal-follows:  func(a: tstzspan, b: tstzspan) -> bool;
+}
+
+interface textset-ops {
+    textset-make: func(values: list<string>) -> list<string>;
+    textset-from-text: func(t: string) -> list<string>;
+    textset-to-text: func(values: list<string>) -> string;
+    textset-len: func(values: list<string>) -> u32;
+    textset-min: func(values: list<string>) -> option<string>;
+    textset-max: func(values: list<string>) -> option<string>;
+    textset-contains: func(values: list<string>, v: string) -> bool;
+    textset-is-superset: func(a: list<string>, b: list<string>) -> bool;
+    textset-union: func(a: list<string>, b: list<string>) -> list<string>;
+    textset-intersection: func(a: list<string>, b: list<string>) -> list<string>;
+    textset-minus: func(a: list<string>, b: list<string>) -> list<string>;
+    textset-symdiff: func(a: list<string>, b: list<string>) -> list<string>;
+    textset-values: func(values: list<string>) -> list<string>;
+}
+
+interface span-extras-ops {
+    use spans-ops.{int-span, float-span, date-span};
+
+    // Lower/upper accessors
+    intspan-lower: func(s: int-span) -> s64;
+    intspan-upper: func(s: int-span) -> s64;
+    floatspan-lower: func(s: float-span) -> f64;
+    floatspan-upper: func(s: float-span) -> f64;
+    datespan-lower: func(s: date-span) -> s32;
+    datespan-upper: func(s: date-span) -> s32;
+
+    // Midpoint
+    floatspan-midpoint: func(s: float-span) -> f64;
+
+    // Scale (factor, origin)
+    intspan-scale:   func(s: int-span, factor: f64, origin: s64) -> option<int-span>;
+    floatspan-scale: func(s: float-span, factor: f64, origin: f64) -> option<float-span>;
+
+    // Minus (only safe if result is a single span)
+    intspan-minus:   func(a: int-span, b: int-span) -> option<int-span>;
+    floatspan-minus: func(a: float-span, b: float-span) -> option<float-span>;
+}
+
+interface set-extras-ops {
+    intset-make: func(values: list<s64>) -> list<s64>;
+    intset-nth: func(values: list<s64>, n: u32) -> option<s64>;
+    intset-shift: func(values: list<s64>, delta: s64) -> list<s64>;
+    intset-to-span: func(values: list<s64>) -> option<tuple<s64, s64>>;
+    intset-gaps: func(values: list<s64>) -> list<tuple<s64, s64>>;
+    intset-scale: func(values: list<s64>, factor: f64, origin: s64) -> list<s64>;
+
+    floatset-make: func(values: list<f64>) -> list<f64>;
+    floatset-nth: func(values: list<f64>, n: u32) -> option<f64>;
+    floatset-shift: func(values: list<f64>, delta: f64) -> list<f64>;
+    floatset-to-span: func(values: list<f64>) -> option<tuple<f64, f64>>;
+    floatset-scale: func(values: list<f64>, factor: f64, origin: f64) -> list<f64>;
+
+    dateset-make: func(values: list<s32>) -> list<s32>;
+    dateset-nth: func(values: list<s32>, n: u32) -> option<s32>;
+    dateset-shift: func(values: list<s32>, delta: s32) -> list<s32>;
+    dateset-to-span: func(values: list<s32>) -> option<tuple<s32, s32>>;
+    dateset-gaps: func(values: list<s32>) -> list<tuple<s32, s32>>;
+}
+
+interface tstzset-ops {
+    /// A set of timestamps (sorted, distinct).
+    /// Same shape used for `timeset_*` aliases.
+    tstzset-make: func(timestamps: list<s64>) -> list<s64>;
+    tstzset-len: func(timestamps: list<s64>) -> u32;
+    tstzset-contains: func(timestamps: list<s64>, ts: s64) -> bool;
+    tstzset-nth: func(timestamps: list<s64>, n: u32) -> option<s64>;
+    tstzset-shift: func(timestamps: list<s64>, delta-us: s64) -> list<s64>;
+    tstzset-overlaps: func(a: list<s64>, b: list<s64>) -> bool;
+    tstzset-union: func(a: list<s64>, b: list<s64>) -> list<s64>;
+    tstzset-intersection: func(a: list<s64>, b: list<s64>) -> list<s64>;
+    tstzset-minus: func(a: list<s64>, b: list<s64>) -> list<s64>;
+    tstzset-successor: func(timestamps: list<s64>) -> list<s64>;
+}
+
+interface tstzspan-ops {
+    record tstzspan {
+        start: s64,
+        end: s64,
+        start-inc: bool,
+        end-inc: bool,
+    }
+
+    tstzspan-make: func(start: s64, end: s64, start-inc: bool, end-inc: bool) -> option<tstzspan>;
+    tstzspan-start: func(s: tstzspan) -> s64;
+    tstzspan-end:   func(s: tstzspan) -> s64;
+    tstzspan-duration: func(s: tstzspan) -> s64;
+    tstzspan-midpoint: func(s: tstzspan) -> s64;
+    tstzspan-contains: func(s: tstzspan, t: s64) -> bool;
+    tstzspan-contains-span: func(a: tstzspan, b: tstzspan) -> bool;
+    tstzspan-overlaps: func(a: tstzspan, b: tstzspan) -> bool;
+    tstzspan-adjacent: func(a: tstzspan, b: tstzspan) -> bool;
+    tstzspan-intersection: func(a: tstzspan, b: tstzspan) -> option<tstzspan>;
+    tstzspan-union: func(a: tstzspan, b: tstzspan) -> option<tstzspan>;
+    tstzspan-minus: func(a: tstzspan, b: tstzspan) -> option<tstzspan>;
+    tstzspan-shift: func(s: tstzspan, delta-us: s64) -> tstzspan;
+    tstzspan-scale: func(s: tstzspan, factor: f64, origin-us: s64) -> option<tstzspan>;
+    tstzspan-expand: func(s: tstzspan, delta-us: s64) -> option<tstzspan>;
+}
+
+interface tgeompoint-detection-ops {
+    use types.{tgeompoint-sequence};
+
+    // Detection helpers exposed as count-returning variants (the actual
+    // event-list returns would need their own codecs).
+    tgeompoint-detect-stops: func(seq: tgeompoint-sequence, speed-threshold: f64, min-duration-us: s64) -> u32;
+    tgeompoint-detect-turns: func(seq: tgeompoint-sequence, min-angle: f64) -> u32;
+    tgeompoint-detect-u-turns: func(seq: tgeompoint-sequence) -> u32;
+    tgeompoint-detect-loops: func(seq: tgeompoint-sequence, distance-threshold: f64) -> u32;
+    tgeompoint-acceleration-events: func(seq: tgeompoint-sequence, threshold: f64) -> u32;
+    tgeompoint-acceleration-event-count: func(seq: tgeompoint-sequence, threshold: f64) -> u32;
+    tgeompoint-acceleration-count: func(seq: tgeompoint-sequence, threshold: f64) -> u32;
+}
+
+interface tgeompoint-extended-ops {
+    use types.{tgeompoint-sequence, timestamp-tz};
+    use stbox-ops.{stbox};
+
+    tgeompoint-at-period: func(seq: tgeompoint-sequence, tmin: s64, tmax: s64) -> option<tgeompoint-sequence>;
+    tgeompoint-minus-period: func(seq: tgeompoint-sequence, tmin: s64, tmax: s64) -> option<tgeompoint-sequence>;
+    tgeompoint-overlaps-stbox: func(seq: tgeompoint-sequence, box: stbox) -> bool;
+    tgeompoint-srid: func(seq: tgeompoint-sequence) -> s32;
+    tgeompoint-to-web-mercator: func(seq: tgeompoint-sequence) -> option<tgeompoint-sequence>;
+    tgeompoint-from-web-mercator: func(seq: tgeompoint-sequence) -> option<tgeompoint-sequence>;
+    tgeompoint-bearing: func(seq: tgeompoint-sequence) -> list<f64>;
+    tgeompoint-geodetic-speed: func(seq: tgeompoint-sequence) -> list<f64>;
+    tgeompoint-geodetic-length: func(seq: tgeompoint-sequence) -> f64;
+}
+
+interface tint-math-ops {
+    use types.{tfloat-sequence, tint-sequence};
+
+    tint-abs:    func(seq: tint-sequence) -> tint-sequence;
+    tint-negate: func(seq: tint-sequence) -> tint-sequence;
+    tint-mod-scalar: func(seq: tint-sequence, scalar: s64) -> option<tint-sequence>;
+    tint-integral: func(seq: tint-sequence) -> s64;
+    tint-twavg: func(seq: tint-sequence) -> option<f64>;
+    tint-twmin: func(seq: tint-sequence) -> option<s64>;
+    tint-twmax: func(seq: tint-sequence) -> option<s64>;
+    tint-twsum: func(seq: tint-sequence) -> s64;
+    tint-moving-average: func(seq: tint-sequence, window-micros: s64) -> tfloat-sequence;
+    tint-exponential-smooth: func(seq: tint-sequence, alpha: f64) -> tfloat-sequence;
+    tint-sequence-to-tfloat: func(seq: tint-sequence) -> tfloat-sequence;
+}
+
+interface tfloat-math-ops {
+    use types.{tfloat-sequence};
+
+    tfloat-abs:    func(seq: tfloat-sequence) -> tfloat-sequence;
+    tfloat-negate: func(seq: tfloat-sequence) -> tfloat-sequence;
+    tfloat-sqrt:   func(seq: tfloat-sequence) -> tfloat-sequence;
+    tfloat-ln:     func(seq: tfloat-sequence) -> tfloat-sequence;
+    tfloat-log10:  func(seq: tfloat-sequence) -> tfloat-sequence;
+    tfloat-exp:    func(seq: tfloat-sequence) -> tfloat-sequence;
+    tfloat-sin:    func(seq: tfloat-sequence) -> tfloat-sequence;
+    tfloat-cos:    func(seq: tfloat-sequence) -> tfloat-sequence;
+    tfloat-tan:    func(seq: tfloat-sequence) -> tfloat-sequence;
+    tfloat-pow:    func(seq: tfloat-sequence, exponent: f64) -> tfloat-sequence;
+
+    tfloat-twavg: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-twmin: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-twmax: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-twsum: func(seq: tfloat-sequence) -> f64;
+}
+
+interface bitemporal-residue-ops {
+    use types.{tfloat-sequence};
+    use tbool-ops.{tbool-sequence};
+    use bitemporal-float-ops.{bitemporal-float-sequence};
+    use bitemporal-int-ops.{bitemporal-int-sequence};
+    use bitemporal-bool-ops.{bitemporal-bool-sequence};
+    use bitemporal-text-ops.{bitemporal-text-sequence};
+
+    // current() count: how many records are not superseded
+    bitemporal-float-current: func(seq: bitemporal-float-sequence) -> u32;
+    bitemporal-int-current:   func(seq: bitemporal-int-sequence)   -> u32;
+    bitemporal-bool-current:  func(seq: bitemporal-bool-sequence)  -> u32;
+    bitemporal-text-current:  func(seq: bitemporal-text-sequence)  -> u32;
+
+    // valid_during count
+    bitemporal-float-valid-during-count: func(seq: bitemporal-float-sequence, start: s64, end: s64) -> u32;
+    bitemporal-int-valid-during-count:   func(seq: bitemporal-int-sequence,   start: s64, end: s64) -> u32;
+    bitemporal-bool-valid-during-count:  func(seq: bitemporal-bool-sequence,  start: s64, end: s64) -> u32;
+    bitemporal-text-valid-during-count:  func(seq: bitemporal-text-sequence,  start: s64, end: s64) -> u32;
+
+    // ever_valid_during count
+    bitemporal-float-ever-valid-during-count: func(seq: bitemporal-float-sequence, start: s64, end: s64) -> u32;
+    bitemporal-int-ever-valid-during-count:   func(seq: bitemporal-int-sequence,   start: s64, end: s64) -> u32;
+    bitemporal-bool-ever-valid-during-count:  func(seq: bitemporal-bool-sequence,  start: s64, end: s64) -> u32;
+    bitemporal-text-ever-valid-during-count:  func(seq: bitemporal-text-sequence,  start: s64, end: s64) -> u32;
+
+    // history_at count
+    bitemporal-float-history-at-count: func(seq: bitemporal-float-sequence, valid-ts: s64) -> u32;
+    bitemporal-int-history-at-count:   func(seq: bitemporal-int-sequence,   valid-ts: s64) -> u32;
+    bitemporal-bool-history-at-count:  func(seq: bitemporal-bool-sequence,  valid-ts: s64) -> u32;
+    bitemporal-text-history-at-count:  func(seq: bitemporal-text-sequence,  valid-ts: s64) -> u32;
+}
+
+interface stbox3d-ops {
+    record stbox3d {
+        xmin: f64, xmax: f64,
+        ymin: f64, ymax: f64,
+        zmin: f64, zmax: f64,
+        tmin: s64, tmax: s64,
+    }
+
+    stbox3d-make: func(xmin: f64, xmax: f64, ymin: f64, ymax: f64, zmin: f64, zmax: f64, tmin: s64, tmax: s64) -> stbox3d;
+    stbox3d-volume: func(b: stbox3d) -> f64;
+    stbox3d-surface-area: func(b: stbox3d) -> f64;
+    stbox3d-contains-point: func(b: stbox3d, x: f64, y: f64, z: f64, t: s64) -> bool;
+    stbox3d-intersects: func(a: stbox3d, b: stbox3d) -> bool;
+    stbox3d-union: func(a: stbox3d, b: stbox3d) -> stbox3d;
+    stbox3d-intersection: func(a: stbox3d, b: stbox3d) -> option<stbox3d>;
+}
+
+interface tnpoint-extended-ops {
+    use types.{tfloat-sequence};
+    use tnpoint-ops.{tnpoint-sequence};
+
+    tnpoint-at-period: func(seq: tnpoint-sequence, tmin: s64, tmax: s64) -> option<tnpoint-sequence>;
+    tnpoint-at-position-range: func(seq: tnpoint-sequence, start-pos: f64, end-pos: f64) -> option<tnpoint-sequence>;
+    tnpoint-simplify: func(seq: tnpoint-sequence, tolerance: f64) -> option<tnpoint-sequence>;
+    tnpoint-shift-time: func(seq: tnpoint-sequence, delta-us: s64) -> option<tnpoint-sequence>;
+    tnpoint-scale-time: func(seq: tnpoint-sequence, factor: f64) -> option<tnpoint-sequence>;
+    tnpoint-num-stops: func(seq: tnpoint-sequence, position-threshold: f64, min-duration-us: s64) -> u32;
+    tnpoint-stop-duration: func(seq: tnpoint-sequence, position-threshold: f64, min-duration-us: s64) -> s64;
+    tnpoint-positions: func(seq: tnpoint-sequence) -> tfloat-sequence;
+    tnpoint-network-speed: func(seq: tnpoint-sequence) -> tfloat-sequence;
+    tnpoint-cumulative-length: func(seq: tnpoint-sequence) -> tfloat-sequence;
+    tnpoint-num-route-changes: func(seq: tnpoint-sequence) -> u32;
+}
+
+interface tcbuffer-extended-ops {
+    use types.{tfloat-sequence, tgeompoint-sequence};
+    use tcbuffer-ops.{tcbuffer-sequence};
+
+    tcbuffer-avg-radius: func(seq: tcbuffer-sequence) -> option<f64>;
+    tcbuffer-total-area: func(seq: tcbuffer-sequence) -> f64;
+    tcbuffer-avg-area: func(seq: tcbuffer-sequence) -> option<f64>;
+    tcbuffer-swept-area: func(seq: tcbuffer-sequence) -> f64;
+    tcbuffer-center-path-length: func(seq: tcbuffer-sequence) -> f64;
+    tcbuffer-ever-contains-point: func(seq: tcbuffer-sequence, x: f64, y: f64) -> bool;
+    tcbuffer-always-contains-point: func(seq: tcbuffer-sequence, x: f64, y: f64) -> bool;
+    tcbuffer-contains-point-at: func(seq: tcbuffer-sequence, x: f64, y: f64, t: s64) -> bool;
+    tcbuffer-get-center-x: func(seq: tcbuffer-sequence) -> tfloat-sequence;
+    tcbuffer-get-center-y: func(seq: tcbuffer-sequence) -> tfloat-sequence;
+    tcbuffer-get-radius: func(seq: tcbuffer-sequence) -> tfloat-sequence;
+    tcbuffer-get-area: func(seq: tcbuffer-sequence) -> tfloat-sequence;
+    tcbuffer-to-tgeompoint: func(seq: tcbuffer-sequence) -> tgeompoint-sequence;
+}
+
+interface tpose-extended-ops {
+    use types.{tfloat-sequence, tgeompoint-sequence};
+    use tpose-ops.{tpose-sequence};
+
+    tpose-get-x: func(seq: tpose-sequence) -> tfloat-sequence;
+    tpose-get-y: func(seq: tpose-sequence) -> tfloat-sequence;
+    tpose-get-orientation: func(seq: tpose-sequence) -> tfloat-sequence;
+    tpose-linear-speed: func(seq: tpose-sequence) -> tfloat-sequence;
+    tpose-angular-velocity: func(seq: tpose-sequence) -> tfloat-sequence;
+    tpose-linear-acceleration: func(seq: tpose-sequence) -> tfloat-sequence;
+    tpose-angular-acceleration: func(seq: tpose-sequence) -> tfloat-sequence;
+    tpose-curvature: func(seq: tpose-sequence) -> tfloat-sequence;
+    tpose-compute-heading-from-movement: func(seq: tpose-sequence) -> tfloat-sequence;
+    tpose-distance-to-point: func(seq: tpose-sequence, px: f64, py: f64) -> tfloat-sequence;
+    tpose-distance-to-pose: func(seq1: tpose-sequence, seq2: tpose-sequence) -> tfloat-sequence;
+    tpose-angular-distance-to-pose: func(seq1: tpose-sequence, seq2: tpose-sequence) -> tfloat-sequence;
+}
+
+interface trajectory-restrictions-ops {
+    use types.{tgeompoint-sequence};
+    use tgeompoint3d-ops.{tgeompoint3d-sequence};
+    use tgeogpoint-ops.{tgeogpoint-sequence};
+    use stbox-ops.{stbox};
+
+    // Tgeompoint (2D) point-based restrictions
+    tgeompoint-at-point: func(seq: tgeompoint-sequence, x: f64, y: f64, tolerance: f64) -> option<tgeompoint-sequence>;
+    tgeompoint-minus-point: func(seq: tgeompoint-sequence, x: f64, y: f64, tolerance: f64) -> option<tgeompoint-sequence>;
+    tgeompoint-at-stbox: func(seq: tgeompoint-sequence, box: stbox) -> option<tgeompoint-sequence>;
+    tgeompoint-minus-stbox: func(seq: tgeompoint-sequence, box: stbox) -> option<tgeompoint-sequence>;
+    tgeompoint-nearest-approach-distance: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence) -> option<f64>;
+
+    // Tgeompoint3d (point-only restrictions; 3D STBox restrictions deferred)
+    tgeompoint3d-at-point: func(seq: tgeompoint3d-sequence, x: f64, y: f64, z: f64, tolerance: f64) -> option<tgeompoint3d-sequence>;
+    tgeompoint3d-minus-point: func(seq: tgeompoint3d-sequence, x: f64, y: f64, z: f64, tolerance: f64) -> option<tgeompoint3d-sequence>;
+
+    // Tgeogpoint
+    tgeogpoint-at-stbox: func(seq: tgeogpoint-sequence, box: stbox) -> option<tgeogpoint-sequence>;
+    tgeogpoint-minus-stbox: func(seq: tgeogpoint-sequence, box: stbox) -> option<tgeogpoint-sequence>;
+}
+
+interface sets-extended-ops {
+    // Pack/unpack sets as Binary blobs: u32 count + count × element bytes.
+
+    // IntSet operations
+    intset-union: func(a: list<s64>, b: list<s64>) -> list<s64>;
+    intset-intersection: func(a: list<s64>, b: list<s64>) -> list<s64>;
+    intset-minus: func(a: list<s64>, b: list<s64>) -> list<s64>;
+    intset-is-subset: func(a: list<s64>, b: list<s64>) -> bool;
+    intset-is-disjoint: func(a: list<s64>, b: list<s64>) -> bool;
+
+    // FloatSet operations
+    floatset-union: func(a: list<f64>, b: list<f64>) -> list<f64>;
+    floatset-intersection: func(a: list<f64>, b: list<f64>) -> list<f64>;
+    floatset-minus: func(a: list<f64>, b: list<f64>) -> list<f64>;
+    floatset-is-subset: func(a: list<f64>, b: list<f64>) -> bool;
+    floatset-is-disjoint: func(a: list<f64>, b: list<f64>) -> bool;
+
+    // TextSet operations
+    textset-union: func(a: list<string>, b: list<string>) -> list<string>;
+    textset-intersection: func(a: list<string>, b: list<string>) -> list<string>;
+    textset-minus: func(a: list<string>, b: list<string>) -> list<string>;
+    textset-is-subset: func(a: list<string>, b: list<string>) -> bool;
+    textset-is-disjoint: func(a: list<string>, b: list<string>) -> bool;
+}
+
+interface ttext-strings-ops {
+    use types.{tint-sequence};
+    use ttext-ops.{ttext-sequence};
+    use tbool-ops.{tbool-sequence};
+
+    ttext-upper: func(seq: ttext-sequence) -> ttext-sequence;
+    ttext-lower: func(seq: ttext-sequence) -> ttext-sequence;
+    ttext-length: func(seq: ttext-sequence) -> tint-sequence;
+    ttext-concat: func(seq1: ttext-sequence, seq2: ttext-sequence) -> option<ttext-sequence>;
+    ttext-concat-str: func(seq: ttext-sequence, suffix: string) -> ttext-sequence;
+    ttext-prepend-str: func(prefix: string, seq: ttext-sequence) -> ttext-sequence;
+    ttext-like: func(seq: ttext-sequence, pattern: string) -> tbool-sequence;
+    ttext-ilike: func(seq: ttext-sequence, pattern: string) -> tbool-sequence;
+    ttext-regex-match: func(seq: ttext-sequence, pattern: string) -> tbool-sequence;
+    ttext-regex-replace: func(seq: ttext-sequence, pattern: string, replacement: string) -> ttext-sequence;
+    ttext-left: func(seq: ttext-sequence, n: u32) -> ttext-sequence;
+    ttext-right: func(seq: ttext-sequence, n: u32) -> ttext-sequence;
+    ttext-ltrim: func(seq: ttext-sequence) -> ttext-sequence;
+    ttext-rtrim: func(seq: ttext-sequence) -> ttext-sequence;
+    ttext-btrim: func(seq: ttext-sequence) -> ttext-sequence;
+}
+
+interface statistics-ops {
+    use types.{tfloat-sequence, tint-sequence, timestamp-tz};
+
+    // Single-sequence calculus
+    tfloat-integral: func(seq: tfloat-sequence) -> f64;
+    tfloat-derivative: func(seq: tfloat-sequence) -> option<tfloat-sequence>;
+    tfloat-sample-entropy: func(seq: tfloat-sequence, m: u32, r: f64) -> option<f64>;
+
+    // Pairwise rolling statistics
+    tfloat-temporal-correlation: func(seq1: tfloat-sequence, seq2: tfloat-sequence, window-size: u32) -> option<tfloat-sequence>;
+    tfloat-temporal-covariance: func(seq1: tfloat-sequence, seq2: tfloat-sequence, window-size: u32) -> option<tfloat-sequence>;
+    tfloat-correlation-at: func(sequences: list<tfloat-sequence>, ts: timestamp-tz) -> option<f64>;
+
+    // Multi-sequence statistics
+    tfloat-temporal-mode: func(sequences: list<tfloat-sequence>, bin-width: f64) -> option<tfloat-sequence>;
+    tfloat-temporal-range: func(sequences: list<tfloat-sequence>) -> option<tfloat-sequence>;
+    tfloat-temporal-iqr: func(sequences: list<tfloat-sequence>) -> option<tfloat-sequence>;
+    tfloat-temporal-skewness: func(sequences: list<tfloat-sequence>) -> option<tfloat-sequence>;
+    tfloat-temporal-kurtosis: func(sequences: list<tfloat-sequence>) -> option<tfloat-sequence>;
+    tfloat-temporal-entropy: func(sequences: list<tfloat-sequence>, num-bins: u32) -> option<tfloat-sequence>;
+    tfloat-temporal-weighted-median: func(sequences: list<tfloat-sequence>, weights: list<f64>) -> option<tfloat-sequence>;
+
+    tint-temporal-mode: func(sequences: list<tint-sequence>) -> option<tint-sequence>;
+    tint-temporal-range: func(sequences: list<tint-sequence>) -> option<tint-sequence>;
+}
+
+interface arithmetic-ops {
+    use types.{tfloat-sequence, tint-sequence};
+
+    // Tfloat seq-vs-seq arithmetic
+    tfloat-add: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tfloat-sequence>;
+    tfloat-sub: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tfloat-sequence>;
+    tfloat-mul: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tfloat-sequence>;
+    tfloat-div: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tfloat-sequence>;
+
+    // Tfloat seq-vs-scalar
+    tfloat-add-scalar: func(seq: tfloat-sequence, v: f64) -> tfloat-sequence;
+    tfloat-sub-scalar: func(seq: tfloat-sequence, v: f64) -> tfloat-sequence;
+    tfloat-mul-scalar: func(seq: tfloat-sequence, v: f64) -> tfloat-sequence;
+    tfloat-div-scalar: func(seq: tfloat-sequence, v: f64) -> option<tfloat-sequence>;
+
+    // Tint seq-vs-seq
+    tint-add: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tint-sequence>;
+    tint-sub: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tint-sequence>;
+    tint-mul: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tint-sequence>;
+    tint-div: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tint-sequence>;
+
+    // Tint seq-vs-scalar
+    tint-add-scalar: func(seq: tint-sequence, v: s64) -> tint-sequence;
+    tint-sub-scalar: func(seq: tint-sequence, v: s64) -> tint-sequence;
+    tint-mul-scalar: func(seq: tint-sequence, v: s64) -> tint-sequence;
+    tint-div-scalar: func(seq: tint-sequence, v: s64) -> option<tint-sequence>;
+}
+
+interface comparisons-ops {
+    use types.{tfloat-sequence, tint-sequence};
+    use tbool-ops.{tbool-sequence};
+    use ttext-ops.{ttext-sequence};
+
+    // Tfloat seq-vs-seq pointwise comparisons.
+    tfloat-temporal-eq: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tbool-sequence>;
+    tfloat-temporal-ne: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tbool-sequence>;
+    tfloat-temporal-lt: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tbool-sequence>;
+    tfloat-temporal-le: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tbool-sequence>;
+    tfloat-temporal-gt: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tbool-sequence>;
+    tfloat-temporal-ge: func(seq1: tfloat-sequence, seq2: tfloat-sequence) -> option<tbool-sequence>;
+
+    // Tint seq-vs-seq pointwise comparisons.
+    tint-temporal-eq: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tbool-sequence>;
+    tint-temporal-ne: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tbool-sequence>;
+    tint-temporal-lt: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tbool-sequence>;
+    tint-temporal-le: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tbool-sequence>;
+    tint-temporal-gt: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tbool-sequence>;
+    tint-temporal-ge: func(seq1: tint-sequence, seq2: tint-sequence) -> option<tbool-sequence>;
+
+    // Tfloat ever/always (derived from seq-vs-scalar lifted predicates).
+    tfloat-ever-eq:    func(seq: tfloat-sequence, v: f64) -> bool;
+    tfloat-always-eq:  func(seq: tfloat-sequence, v: f64) -> bool;
+    tfloat-ever-lt:    func(seq: tfloat-sequence, v: f64) -> bool;
+    tfloat-always-lt:  func(seq: tfloat-sequence, v: f64) -> bool;
+    tfloat-ever-gt:    func(seq: tfloat-sequence, v: f64) -> bool;
+    tfloat-always-gt:  func(seq: tfloat-sequence, v: f64) -> bool;
+
+    // Tint ever/always.
+    tint-ever-eq:    func(seq: tint-sequence, v: s64) -> bool;
+    tint-always-eq:  func(seq: tint-sequence, v: s64) -> bool;
+    tint-ever-lt:    func(seq: tint-sequence, v: s64) -> bool;
+    tint-always-lt:  func(seq: tint-sequence, v: s64) -> bool;
+    tint-ever-gt:    func(seq: tint-sequence, v: s64) -> bool;
+    tint-always-gt:  func(seq: tint-sequence, v: s64) -> bool;
+
+    // Ttext ever/always equality.
+    ttext-ever-eq:    func(seq: ttext-sequence, v: string) -> bool;
+    ttext-always-eq:  func(seq: ttext-sequence, v: string) -> bool;
+}
+
+interface restrictions-ops {
+    use types.{tfloat-sequence, tint-sequence, time-period};
+    use tbool-ops.{tbool-sequence};
+    use ttext-ops.{ttext-sequence};
+
+    // Tfloat restrictions
+    tfloat-at-period: func(seq: tfloat-sequence, start: s64, end: s64) -> option<tfloat-sequence>;
+    tfloat-minus-period: func(seq: tfloat-sequence, start: s64, end: s64) -> option<tfloat-sequence>;
+    tfloat-at-value: func(seq: tfloat-sequence, v: f64) -> option<tfloat-sequence>;
+    tfloat-minus-value: func(seq: tfloat-sequence, v: f64) -> option<tfloat-sequence>;
+    tfloat-at-min: func(seq: tfloat-sequence) -> option<tfloat-sequence>;
+    tfloat-at-max: func(seq: tfloat-sequence) -> option<tfloat-sequence>;
+    tfloat-when-eq: func(seq: tfloat-sequence, v: f64) -> option<tbool-sequence>;
+    tfloat-when-ne: func(seq: tfloat-sequence, v: f64) -> option<tbool-sequence>;
+    tfloat-when-lt: func(seq: tfloat-sequence, v: f64) -> option<tbool-sequence>;
+    tfloat-when-le: func(seq: tfloat-sequence, v: f64) -> option<tbool-sequence>;
+    tfloat-when-gt: func(seq: tfloat-sequence, v: f64) -> option<tbool-sequence>;
+    tfloat-when-ge: func(seq: tfloat-sequence, v: f64) -> option<tbool-sequence>;
+
+    // Tint restrictions
+    tint-at-period: func(seq: tint-sequence, start: s64, end: s64) -> option<tint-sequence>;
+    tint-minus-period: func(seq: tint-sequence, start: s64, end: s64) -> option<tint-sequence>;
+    tint-at-value: func(seq: tint-sequence, v: s64) -> option<tint-sequence>;
+    tint-minus-value: func(seq: tint-sequence, v: s64) -> option<tint-sequence>;
+    tint-at-min: func(seq: tint-sequence) -> option<tint-sequence>;
+    tint-at-max: func(seq: tint-sequence) -> option<tint-sequence>;
+    tint-when-eq: func(seq: tint-sequence, v: s64) -> option<tbool-sequence>;
+    tint-when-ne: func(seq: tint-sequence, v: s64) -> option<tbool-sequence>;
+    tint-when-lt: func(seq: tint-sequence, v: s64) -> option<tbool-sequence>;
+    tint-when-le: func(seq: tint-sequence, v: s64) -> option<tbool-sequence>;
+    tint-when-gt: func(seq: tint-sequence, v: s64) -> option<tbool-sequence>;
+    tint-when-ge: func(seq: tint-sequence, v: s64) -> option<tbool-sequence>;
+
+    // Tbool restrictions (no min/max/lt/gt)
+    tbool-at-period: func(seq: tbool-sequence, start: s64, end: s64) -> option<tbool-sequence>;
+    tbool-minus-period: func(seq: tbool-sequence, start: s64, end: s64) -> option<tbool-sequence>;
+    tbool-at-value: func(seq: tbool-sequence, v: bool) -> option<tbool-sequence>;
+    tbool-minus-value: func(seq: tbool-sequence, v: bool) -> option<tbool-sequence>;
+
+    // Ttext restrictions (no min/max/lt/gt — string-typed)
+    ttext-at-period: func(seq: ttext-sequence, start: s64, end: s64) -> option<ttext-sequence>;
+    ttext-minus-period: func(seq: ttext-sequence, start: s64, end: s64) -> option<ttext-sequence>;
+    ttext-at-value: func(seq: ttext-sequence, v: string) -> option<ttext-sequence>;
+    ttext-minus-value: func(seq: ttext-sequence, v: string) -> option<ttext-sequence>;
+    ttext-when-eq: func(seq: ttext-sequence, v: string) -> option<tbool-sequence>;
+    ttext-when-ne: func(seq: ttext-sequence, v: string) -> option<tbool-sequence>;
+}
+
+interface temporal-aggregate-ops {
+    use types.{tfloat-sequence, tint-sequence};
+    use tbool-ops.{tbool-sequence};
+    use tgeogpoint-ops.{tgeogpoint-sequence};
+    use tnpoint-ops.{tnpoint-sequence};
+    use tpose-ops.{tpose-sequence};
+    use tcbuffer-ops.{tcbuffer-sequence};
+    use tgeompoint-ops.{tgeompoint-sequence};
+    use stbox-ops.{stbox};
+
+    /// Element-wise minimum across multiple float sequences at each instant.
+    tfloat-temporal-min: func(sequences: list<tfloat-sequence>) -> option<tfloat-sequence>;
+    /// Element-wise maximum across multiple float sequences at each instant.
+    tfloat-temporal-max: func(sequences: list<tfloat-sequence>) -> option<tfloat-sequence>;
+    /// Element-wise sum across multiple float sequences at each instant.
+    tfloat-temporal-sum: func(sequences: list<tfloat-sequence>) -> option<tfloat-sequence>;
+    /// Element-wise mean across multiple float sequences at each instant.
+    tfloat-temporal-avg: func(sequences: list<tfloat-sequence>) -> option<tfloat-sequence>;
+    /// Element-wise count of non-null values across multiple sequences.
+    tfloat-temporal-count: func(sequences: list<tfloat-sequence>) -> option<tint-sequence>;
+
+    /// Integer temporal aggregates.
+    tint-temporal-min: func(sequences: list<tint-sequence>) -> option<tint-sequence>;
+    tint-temporal-max: func(sequences: list<tint-sequence>) -> option<tint-sequence>;
+    tint-temporal-sum: func(sequences: list<tint-sequence>) -> option<tint-sequence>;
+
+    /// Boolean temporal AND/OR aggregates.
+    tbool-temporal-and: func(sequences: list<tbool-sequence>) -> option<tbool-sequence>;
+    tbool-temporal-or:  func(sequences: list<tbool-sequence>) -> option<tbool-sequence>;
+
+    /// M6 (2026-06-23) — per-base-type temporal counts. Returns an
+    /// integer sequence whose value at each shared timestamp is the
+    /// number of input sequences that have a value defined there.
+    /// Counts only — not value-channel reductions — because none of
+    /// these point/curve/network types carry a scalar ordering that
+    /// lifted min/max/sum could use.
+    tgeogpoint-temporal-count: func(sequences: list<tgeogpoint-sequence>) -> option<tint-sequence>;
+    tnpoint-temporal-count: func(sequences: list<tnpoint-sequence>) -> option<tint-sequence>;
+    tpose-temporal-count: func(sequences: list<tpose-sequence>) -> option<tint-sequence>;
+    tcbuffer-temporal-count: func(sequences: list<tcbuffer-sequence>) -> option<tint-sequence>;
+
+    /// Audit Item 9 (2026-06-23) — trajectory aggregates over
+    /// tgeompoint. `tgeompoint-temporal-centroid` returns a
+    /// tgeompoint sequence whose value at each shared timestamp
+    /// is the mean (x, y) over all trajectories defined there.
+    /// `tgeompoint-st-extent` returns the smallest STBOX
+    /// covering every instant of every input trajectory (xmin /
+    /// xmax / ymin / ymax / tmin / tmax). Both deliberately omit
+    /// the geographic / network / pose / curve base types — those
+    /// don't have a meaningful arithmetic mean in (lon, lat) and
+    /// need separate per-type math.
+    tgeompoint-temporal-centroid: func(sequences: list<tgeompoint-sequence>) -> option<tgeompoint-sequence>;
+    tgeompoint-st-extent: func(sequences: list<tgeompoint-sequence>) -> option<stbox>;
+    /// Per-base-type tcount also added for tgeompoint to match the
+    /// other point types from M6.
+    tgeompoint-temporal-count: func(sequences: list<tgeompoint-sequence>) -> option<tint-sequence>;
+}
+
+interface clustering-ops {
+    use types.{timestamp-tz};
+    use tgeompoint-ops.{tgeompoint-sequence};
+
+    /// 2D point with an integer id — the unit of input for the cluster routines.
+    record cluster-point { id: u64, x: f64, y: f64 }
+
+    /// Run DBSCAN over the given 2D points and return the count of clusters
+    /// excluding noise.
+    dbscan-cluster-count: func(points: list<cluster-point>, eps: f64, min-pts: u32) -> u32;
+
+    /// Run k-means over the given 2D points and return its final inertia.
+    kmeans-inertia: func(points: list<cluster-point>, k: u32, max-iters: u32, tolerance: f64, seed: u64) -> f64;
+
+    /// Run k-means and return the centroid x-coordinates in cluster order.
+    kmeans-centroid-xs: func(points: list<cluster-point>, k: u32, max-iters: u32, tolerance: f64, seed: u64) -> list<f64>;
+
+    /// Run k-means and return the centroid y-coordinates in cluster order.
+    kmeans-centroid-ys: func(points: list<cluster-point>, k: u32, max-iters: u32, tolerance: f64, seed: u64) -> list<f64>;
+
+    /// Run DBSCAN over the instants of a tgeompoint trajectory and return the
+    /// number of clusters (excluding noise).
+    tgeompoint-cluster-count-dbscan: func(seq: tgeompoint-sequence, eps: f64, min-pts: u32) -> u32;
+}
+
+interface similarity-extended-ops {
+    use tgeompoint-ops.{tgeompoint-sequence};
+
+    /// LCSS distance (Longest Common Subsequence): 0 = identical, 1 = disjoint.
+    lcss-distance: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence, epsilon: f64, delta: u32) -> f64;
+    /// LCSS similarity = 1 − distance.
+    lcss-similarity: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence, epsilon: f64, delta: u32) -> f64;
+    /// EDR distance (Edit Distance on Real sequences).
+    edr-distance: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence, epsilon: f64) -> f64;
+    /// TWED distance (Time-Warp Edit Distance).
+    twed-distance: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence, lambda: f64, nu: f64) -> f64;
+    /// TWED distance normalized by trajectory length.
+    twed-distance-normalized: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence, lambda: f64, nu: f64) -> f64;
+    /// Average Frechet distance (less sensitive to outliers than max).
+    average-frechet-distance: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence) -> f64;
+    /// DTW distance normalized by path length.
+    dtw-distance-normalized: func(seq1: tgeompoint-sequence, seq2: tgeompoint-sequence) -> f64;
+}
+
+interface analytics-ops {
+    use types.{timestamp-tz};
+    use tgeompoint-ops.{tgeompoint-sequence};
+    use tgeogpoint-ops.{tgeogpoint-sequence};
+
+    /// Count stops in a trajectory (consecutive instants below speed-threshold for at least min-duration µs).
+    tgeompoint-num-stops: func(seq: tgeompoint-sequence, speed-threshold: f64, min-duration-us: s64) -> u32;
+    /// Count turns where the angle exceeds the threshold (radians).
+    tgeompoint-num-turns: func(seq: tgeompoint-sequence, angle-threshold: f64) -> u32;
+    /// Count U-turns (angle > 150°).
+    tgeompoint-num-u-turns: func(seq: tgeompoint-sequence) -> u32;
+    /// Count loops (positions returning within distance-threshold of an earlier position).
+    tgeompoint-num-loops: func(seq: tgeompoint-sequence, distance-threshold: f64) -> u32;
+    /// Trajectory quality score in [0, 1].
+    tgeompoint-quality-score: func(seq: tgeompoint-sequence) -> f64;
+
+    /// Count convoy patterns among multiple trajectories.
+    tgeompoint-num-convoys: func(trajectories: list<tgeompoint-sequence>, distance-threshold: f64, min-duration-us: s64, min-size: u32) -> u32;
+    /// Count flock patterns among multiple trajectories.
+    tgeompoint-num-flocks: func(trajectories: list<tgeompoint-sequence>, distance-threshold: f64, min-size: u32) -> u32;
+    /// Count meeting patterns among multiple trajectories.
+    tgeompoint-num-meetings: func(trajectories: list<tgeompoint-sequence>, distance-threshold: f64, min-duration-us: s64) -> u32;
+
+    /// Geography variants.
+    tgeogpoint-num-stops: func(seq: tgeogpoint-sequence, speed-threshold: f64, min-duration-us: s64) -> u32;
+    tgeogpoint-num-turns: func(seq: tgeogpoint-sequence, angle-threshold: f64) -> u32;
+
+    /// Geometric helpers — bearing and distance over Cartesian points.
+    bearing: func(x1: f64, y1: f64, x2: f64, y2: f64) -> f64;
+    distance: func(x1: f64, y1: f64, x2: f64, y2: f64) -> f64;
+    /// Smallest signed angular difference between two bearings (radians).
+    angular-diff: func(b1: f64, b2: f64) -> f64;
+}
+
+interface other-indexes-ops {
+    use types.{timestamp-tz};
+
+    /// 2D point with an associated identifier — the unit of bulk-load for
+    /// quadtree/kdtree2d query helpers.
+    record indexed-point-xy { x: f64, y: f64, id: s64 }
+    /// 3D point with an associated identifier — for octree/kdtree3d helpers.
+    record indexed-point-xyz { x: f64, y: f64, z: f64, id: s64 }
+    /// Interval with an identifier — for interval-tree helpers.
+    record indexed-interval { start: s64, end: s64, id: s64 }
+
+    /// Build a quadtree over the provided 2D points and return ids of points
+    /// inside the [min_x, max_x] × [min_y, max_y] bounding box.
+    quadtree-query-box: func(
+        points: list<indexed-point-xy>,
+        min-x: f64, min-y: f64, max-x: f64, max-y: f64,
+    ) -> list<s64>;
+
+    /// Build a 2D kd-tree and return the k nearest ids to (qx, qy).
+    kdtree-xy-nearest-k: func(
+        points: list<indexed-point-xy>, qx: f64, qy: f64, k: u32,
+    ) -> list<s64>;
+
+    /// Build a 2D kd-tree and return ids within `distance` of (qx, qy).
+    kdtree-xy-within: func(
+        points: list<indexed-point-xy>, qx: f64, qy: f64, distance: f64,
+    ) -> list<s64>;
+
+    /// Build a 3D kd-tree and return the k nearest ids to (qx, qy, qz).
+    kdtree-xyz-nearest-k: func(
+        points: list<indexed-point-xyz>, qx: f64, qy: f64, qz: f64, k: u32,
+    ) -> list<s64>;
+
+    /// Build a 3D kd-tree and return ids within `distance` of (qx, qy, qz).
+    kdtree-xyz-within: func(
+        points: list<indexed-point-xyz>, qx: f64, qy: f64, qz: f64, distance: f64,
+    ) -> list<s64>;
+
+    /// Build an octree over the provided 3D points and return ids of points
+    /// inside the [min, max] cuboid.
+    octree-query-box: func(
+        points: list<indexed-point-xyz>,
+        min-x: f64, min-y: f64, min-z: f64,
+        max-x: f64, max-y: f64, max-z: f64,
+    ) -> list<s64>;
+
+    /// Build an octree and return ids within the sphere centered at (cx, cy, cz).
+    octree-query-sphere: func(
+        points: list<indexed-point-xyz>, cx: f64, cy: f64, cz: f64, radius: f64,
+    ) -> list<s64>;
+
+    /// Build an interval tree and return ids of intervals containing `ts`.
+    interval-tree-query-point: func(intervals: list<indexed-interval>, ts: timestamp-tz) -> list<s64>;
+
+    /// Build an interval tree and return ids of intervals overlapping [start, end].
+    interval-tree-query-overlapping: func(intervals: list<indexed-interval>, start: s64, end: s64) -> list<s64>;
+}
+
+interface tnpoint-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    record npoint { route-id: s64, position: f64 }
+    record nsegment { route-id: s64, start-pos: f64, end-pos: f64 }
+    record tnpoint-instant { timestamp: timestamp-tz, point: npoint }
+    record tnpoint-sequence {
+        instants: list<tnpoint-instant>,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    npoint-new: func(route-id: s64, position: f64) -> npoint;
+    npoint-distance: func(a: npoint, b: npoint) -> option<f64>;
+    npoint-same-route: func(a: npoint, b: npoint) -> bool;
+
+    nsegment-new: func(route-id: s64, start-pos: f64, end-pos: f64) -> result<nsegment, temporal-error>;
+    nsegment-length: func(s: nsegment) -> f64;
+    nsegment-contains: func(s: nsegment, p: npoint) -> bool;
+    nsegment-overlaps: func(a: nsegment, b: nsegment) -> bool;
+    nsegment-midpoint: func(s: nsegment) -> npoint;
+
+    tnpoint-instant-new: func(t: timestamp-tz, route-id: s64, position: f64) -> tnpoint-instant;
+    tnpoint-sequence-new: func(instants: list<tnpoint-instant>) -> result<tnpoint-sequence, temporal-error>;
+    tnpoint-num-instants: func(seq: tnpoint-sequence) -> u32;
+    tnpoint-route-id: func(seq: tnpoint-sequence) -> option<s64>;
+    tnpoint-is-single-route: func(seq: tnpoint-sequence) -> bool;
+    tnpoint-network-length: func(seq: tnpoint-sequence) -> f64;
+    tnpoint-start-position: func(seq: tnpoint-sequence) -> option<f64>;
+    tnpoint-end-position: func(seq: tnpoint-sequence) -> option<f64>;
+    tnpoint-position-at: func(seq: tnpoint-sequence, t: timestamp-tz) -> option<f64>;
+    tnpoint-is-forward: func(seq: tnpoint-sequence) -> bool;
+    tnpoint-is-backward: func(seq: tnpoint-sequence) -> bool;
+    tnpoint-avg-network-speed: func(seq: tnpoint-sequence) -> option<f64>;
+    tnpoint-min-position: func(seq: tnpoint-sequence) -> option<f64>;
+    tnpoint-max-position: func(seq: tnpoint-sequence) -> option<f64>;
+    tnpoint-time-span: func(seq: tnpoint-sequence) -> option<time-period>;
+
+    // ---- Z2: EWKT codecs ----
+    tnpoint-to-ewkt:    func(seq: tnpoint-sequence) -> string;
+    tnpoint-from-ewkt:  func(s: string) -> option<tnpoint-sequence>;
+}
+
+interface bitemporal-bool-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    record bitemporal-bool-instant {
+        value: bool,
+        valid-start: s64,
+        valid-end: s64,
+        transaction-start: s64,
+        transaction-end: s64,
+    }
+    record bitemporal-bool-sequence {
+        instants: list<bitemporal-bool-instant>,
+    }
+
+    bitemporal-bool-instant-new: func(value: bool, valid-start: s64, valid-end: s64, transaction-start: s64, transaction-end: s64) -> bitemporal-bool-instant;
+    bitemporal-bool-sequence-new: func(instants: list<bitemporal-bool-instant>) -> bitemporal-bool-sequence;
+    bitemporal-bool-len: func(seq: bitemporal-bool-sequence) -> u32;
+
+    bitemporal-bool-valid-at: func(seq: bitemporal-bool-sequence, valid-ts: s64) -> option<bool>;
+    bitemporal-bool-as-of: func(seq: bitemporal-bool-sequence, valid-ts: s64, transaction-ts: s64) -> option<bool>;
+    bitemporal-bool-count-current: func(seq: bitemporal-bool-sequence) -> u32;
+    bitemporal-bool-count-superseded: func(seq: bitemporal-bool-sequence) -> u32;
+    bitemporal-bool-valid-extent: func(seq: bitemporal-bool-sequence) -> option<time-period>;
+    bitemporal-bool-transaction-extent: func(seq: bitemporal-bool-sequence) -> option<time-period>;
+
+    /// W7: text codecs.
+    bitemporal-bool-to-ewkt:   func(seq: bitemporal-bool-sequence) -> string;
+    bitemporal-bool-from-ewkt: func(s: string) -> option<bitemporal-bool-sequence>;
+}
+
+interface bitemporal-text-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    record bitemporal-text-instant {
+        value: string,
+        valid-start: s64,
+        valid-end: s64,
+        transaction-start: s64,
+        transaction-end: s64,
+    }
+    record bitemporal-text-sequence {
+        instants: list<bitemporal-text-instant>,
+    }
+
+    bitemporal-text-instant-new: func(value: string, valid-start: s64, valid-end: s64, transaction-start: s64, transaction-end: s64) -> bitemporal-text-instant;
+    bitemporal-text-sequence-new: func(instants: list<bitemporal-text-instant>) -> bitemporal-text-sequence;
+    bitemporal-text-len: func(seq: bitemporal-text-sequence) -> u32;
+
+    bitemporal-text-valid-at: func(seq: bitemporal-text-sequence, valid-ts: s64) -> option<string>;
+    bitemporal-text-as-of: func(seq: bitemporal-text-sequence, valid-ts: s64, transaction-ts: s64) -> option<string>;
+    bitemporal-text-count-current: func(seq: bitemporal-text-sequence) -> u32;
+    bitemporal-text-count-superseded: func(seq: bitemporal-text-sequence) -> u32;
+    bitemporal-text-valid-extent: func(seq: bitemporal-text-sequence) -> option<time-period>;
+    bitemporal-text-transaction-extent: func(seq: bitemporal-text-sequence) -> option<time-period>;
+
+    /// W7: text codecs.
+    bitemporal-text-to-ewkt:   func(seq: bitemporal-text-sequence) -> string;
+    bitemporal-text-from-ewkt: func(s: string) -> option<bitemporal-text-sequence>;
+}
+
+interface bitemporal-float-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    record bitemporal-float-instant {
+        value: f64,
+        valid-start: s64,
+        valid-end: s64,
+        transaction-start: s64,
+        transaction-end: s64,
+    }
+    record bitemporal-float-sequence {
+        instants: list<bitemporal-float-instant>,
+    }
+
+    bitemporal-float-instant-new: func(value: f64, valid-start: s64, valid-end: s64, transaction-start: s64, transaction-end: s64) -> bitemporal-float-instant;
+    bitemporal-float-sequence-new: func(instants: list<bitemporal-float-instant>) -> bitemporal-float-sequence;
+    bitemporal-float-len: func(seq: bitemporal-float-sequence) -> u32;
+
+    bitemporal-float-valid-at: func(seq: bitemporal-float-sequence, valid-ts: s64) -> option<f64>;
+    bitemporal-float-as-of: func(seq: bitemporal-float-sequence, valid-ts: s64, transaction-ts: s64) -> option<f64>;
+    bitemporal-float-count-current: func(seq: bitemporal-float-sequence) -> u32;
+    bitemporal-float-count-superseded: func(seq: bitemporal-float-sequence) -> u32;
+    bitemporal-float-current-values: func(seq: bitemporal-float-sequence) -> list<f64>;
+    bitemporal-float-all-values: func(seq: bitemporal-float-sequence) -> list<f64>;
+    bitemporal-float-valid-extent: func(seq: bitemporal-float-sequence) -> option<time-period>;
+    bitemporal-float-transaction-extent: func(seq: bitemporal-float-sequence) -> option<time-period>;
+
+    bitemporal-float-is-valid-at: func(inst: bitemporal-float-instant, ts: s64) -> bool;
+    bitemporal-float-was-known-at: func(inst: bitemporal-float-instant, ts: s64) -> bool;
+    bitemporal-float-is-current: func(inst: bitemporal-float-instant) -> bool;
+    bitemporal-float-valid-duration: func(inst: bitemporal-float-instant) -> s64;
+    bitemporal-float-transaction-duration: func(inst: bitemporal-float-instant) -> s64;
+
+    /// W7: text codecs.
+    bitemporal-float-to-ewkt:   func(seq: bitemporal-float-sequence) -> string;
+    bitemporal-float-from-ewkt: func(s: string) -> option<bitemporal-float-sequence>;
+}
+
+interface bitemporal-int-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    record bitemporal-int-instant {
+        value: s64,
+        valid-start: s64,
+        valid-end: s64,
+        transaction-start: s64,
+        transaction-end: s64,
+    }
+    record bitemporal-int-sequence {
+        instants: list<bitemporal-int-instant>,
+    }
+
+    bitemporal-int-instant-new: func(value: s64, valid-start: s64, valid-end: s64, transaction-start: s64, transaction-end: s64) -> bitemporal-int-instant;
+    bitemporal-int-sequence-new: func(instants: list<bitemporal-int-instant>) -> bitemporal-int-sequence;
+    bitemporal-int-len: func(seq: bitemporal-int-sequence) -> u32;
+
+    bitemporal-int-valid-at: func(seq: bitemporal-int-sequence, valid-ts: s64) -> option<s64>;
+    bitemporal-int-as-of: func(seq: bitemporal-int-sequence, valid-ts: s64, transaction-ts: s64) -> option<s64>;
+    bitemporal-int-count-current: func(seq: bitemporal-int-sequence) -> u32;
+    bitemporal-int-count-superseded: func(seq: bitemporal-int-sequence) -> u32;
+    bitemporal-int-current-values: func(seq: bitemporal-int-sequence) -> list<s64>;
+    bitemporal-int-all-values: func(seq: bitemporal-int-sequence) -> list<s64>;
+    bitemporal-int-valid-extent: func(seq: bitemporal-int-sequence) -> option<time-period>;
+    bitemporal-int-transaction-extent: func(seq: bitemporal-int-sequence) -> option<time-period>;
+
+    bitemporal-int-is-valid-at: func(inst: bitemporal-int-instant, ts: s64) -> bool;
+    bitemporal-int-was-known-at: func(inst: bitemporal-int-instant, ts: s64) -> bool;
+    bitemporal-int-is-current: func(inst: bitemporal-int-instant) -> bool;
+    bitemporal-int-valid-duration: func(inst: bitemporal-int-instant) -> s64;
+    bitemporal-int-transaction-duration: func(inst: bitemporal-int-instant) -> s64;
+
+    /// W7: text codecs. Format: `value@[vs,ve)@[ts,te)` per instant,
+    /// outer brackets around the sequence.
+    bitemporal-int-to-ewkt:   func(seq: bitemporal-int-sequence) -> string;
+    bitemporal-int-from-ewkt: func(s: string) -> option<bitemporal-int-sequence>;
+}
+
+interface tgeogpoint-ops {
+    use types.{timestamp-tz, time-period, tfloat-sequence, temporal-error};
+
+    record geog-point { lon: f64, lat: f64 }
+    record tgeogpoint-instant { timestamp: timestamp-tz, point: geog-point }
+    record tgeogpoint-sequence {
+        instants: list<tgeogpoint-instant>,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    tgeogpoint-instant-new: func(t: timestamp-tz, lon: f64, lat: f64) -> tgeogpoint-instant;
+    tgeogpoint-sequence-new: func(instants: list<tgeogpoint-instant>) -> result<tgeogpoint-sequence, temporal-error>;
+    tgeogpoint-num-instants: func(seq: tgeogpoint-sequence) -> u32;
+    tgeogpoint-lon-at: func(seq: tgeogpoint-sequence, t: timestamp-tz) -> option<f64>;
+    tgeogpoint-lat-at: func(seq: tgeogpoint-sequence, t: timestamp-tz) -> option<f64>;
+    tgeogpoint-length-geodetic: func(seq: tgeogpoint-sequence) -> f64;
+    tgeogpoint-avg-speed-geodetic: func(seq: tgeogpoint-sequence) -> option<f64>;
+    tgeogpoint-min-distance: func(seq1: tgeogpoint-sequence, seq2: tgeogpoint-sequence) -> option<f64>;
+    tgeogpoint-distance-to-point: func(seq: tgeogpoint-sequence, lon: f64, lat: f64) -> option<f64>;
+    tgeogpoint-azimuth-at: func(seq: tgeogpoint-sequence, t: timestamp-tz) -> option<f64>;
+    tgeogpoint-speed-at: func(seq: tgeogpoint-sequence, t: timestamp-tz) -> option<f64>;
+    tgeogpoint-time-span: func(seq: tgeogpoint-sequence) -> option<time-period>;
+
+    /// W10: per-instant geodetic predicates (Haversine).
+    /// True if any instant is within `distance-m` meters of (lon,lat).
+    tgeogpoint-dwithin-point-geodetic: func(
+        seq: tgeogpoint-sequence,
+        lon: f64,
+        lat: f64,
+        distance-m: f64,
+    ) -> bool;
+
+    /// True if all instants are within `distance-m` of (lon,lat).
+    tgeogpoint-always-dwithin-point-geodetic: func(
+        seq: tgeogpoint-sequence,
+        lon: f64,
+        lat: f64,
+        distance-m: f64,
+    ) -> bool;
+
+    /// Sequence of per-instant great-circle distances (meters)
+    /// from each instant to a fixed (lon, lat). Returns Stepwise
+    /// tfloat-sequence with duplicated-last semantics.
+    tgeogpoint-distance-to-point-seq: func(
+        seq: tgeogpoint-sequence,
+        lon: f64,
+        lat: f64,
+    ) -> option<tfloat-sequence>;
+
+    /// X5 (geodetic completion): true if any instant equals
+    /// (lon,lat) within `epsilon-m` meters.
+    tgeogpoint-tintersects-point-geodetic: func(
+        seq: tgeogpoint-sequence,
+        lon: f64,
+        lat: f64,
+        epsilon-m: f64,
+    ) -> bool;
+    /// Inverse: true if NO instant is within `epsilon-m` of (lon,lat).
+    tgeogpoint-tdisjoint-point-geodetic: func(
+        seq: tgeogpoint-sequence,
+        lon: f64,
+        lat: f64,
+        epsilon-m: f64,
+    ) -> bool;
+    /// Minimum great-circle distance from sequence to a fixed point (meters).
+    tgeogpoint-min-distance-to-point-geodetic: func(
+        seq: tgeogpoint-sequence,
+        lon: f64,
+        lat: f64,
+    ) -> option<f64>;
+    /// Maximum great-circle distance from sequence to a fixed point (meters).
+    tgeogpoint-max-distance-to-point-geodetic: func(
+        seq: tgeogpoint-sequence,
+        lon: f64,
+        lat: f64,
+    ) -> option<f64>;
+}
+
+interface tgeometry-ops {
+    use types.{timestamp-tz, time-period, temporal-error};
+
+    /// A geometry sample reduced to its centroid + classification
+    /// metadata. Phase-7 codec only handles point-only sequences; the
+    /// host stores 24 bytes per instant (i64 t + 2×f64 centroid).
+    record tgeometry-point-instant { timestamp: timestamp-tz, x: f64, y: f64 }
+    record tgeometry-point-sequence {
+        instants: list<tgeometry-point-instant>,
+        lower-inclusive: bool,
+        upper-inclusive: bool,
+    }
+
+    tgeometry-point-instant-new: func(t: timestamp-tz, x: f64, y: f64) -> tgeometry-point-instant;
+    tgeometry-point-num-instants: func(seq: tgeometry-point-sequence) -> u32;
+    tgeometry-point-min-distance-to-point: func(seq: tgeometry-point-sequence, x: f64, y: f64) -> f64;
+    tgeometry-point-min-distance: func(seq1: tgeometry-point-sequence, seq2: tgeometry-point-sequence) -> f64;
+    tgeometry-point-time-span: func(seq: tgeometry-point-sequence) -> option<time-period>;
+}
+
+/// Nearest-neighbour temporal join (W4a #557)
+///
+/// For each instant in `left`, finds the nearest-in-time instant in
+/// `right` and emits a row `(timestamp, distance, left, right)`. The
+/// `distance` field is the absolute time difference in microseconds
+/// rendered as `f64` so callers can use it as a Real-affinity column.
+///
+/// Cross-project coordination note: the upstream `mobilitydb-wasm`
+/// implementation is the source of truth for the precise nearest-
+/// neighbour semantics (forward-only, backward-only, both, ...).
+/// These declarations pick the canonical "both, returning the closer
+/// of the two candidates" shape; if the implementation diverges, the
+/// row shape stays valid and the join semantics resolve upstream.
+interface nearest-join-ops {
+    use types.{timestamp-tz, tfloat-sequence, tint-sequence};
+    use ttext-ops.{ttext-sequence};
+    use tbool-ops.{tbool-sequence};
+
+    record nearest-bool-pair {
+        timestamp: timestamp-tz,
+        distance: f64,
+        left: bool,
+        right: bool,
+    }
+
+    record nearest-float-pair {
+        timestamp: timestamp-tz,
+        distance: f64,
+        left: f64,
+        right: f64,
+    }
+
+    record nearest-int-pair {
+        timestamp: timestamp-tz,
+        distance: f64,
+        left: s64,
+        right: s64,
+    }
+
+    record nearest-text-pair {
+        timestamp: timestamp-tz,
+        distance: f64,
+        left: string,
+        right: string,
+    }
+
+    nearest-join-bool: func(left: tbool-sequence, right: tbool-sequence) -> list<nearest-bool-pair>;
+    nearest-join-float: func(left: tfloat-sequence, right: tfloat-sequence) -> list<nearest-float-pair>;
+    nearest-join-int: func(left: tint-sequence, right: tint-sequence) -> list<nearest-int-pair>;
+    nearest-join-text: func(left: ttext-sequence, right: ttext-sequence) -> list<nearest-text-pair>;
+}
+
+/// Time-bucketed split of a temporal sequence (W4a #557)
+///
+/// Splits a sequence into sub-sequences whose timestamps fall into
+/// successive `[bucket-start, bucket-end)` windows. Each row's
+/// `sub-sequence-json` field carries the JSON encoding of the sub-
+/// sequence — same format as `tfloat-to-json` / `tint-to-json` — so
+/// callers can re-parse it via SQLite's JSON1 ops. Picking JSON over
+/// a nested record keeps each row table-shaped (three primitive
+/// columns) and aligns with the W3.4 `RetShape::JsonText` choice.
+///
+/// Param shape `(seq, bucket-size, origin)` mirrors mobilitydb's
+/// PostgreSQL surface for `*_time_split`. The interface DB lists
+/// `(binary, int64, int64)` matching that shape.
+interface time-split-ops {
+    use types.{timestamp-tz, tfloat-sequence, tint-sequence};
+
+    record tfloat-time-bucket {
+        bucket-start: timestamp-tz,
+        bucket-end: timestamp-tz,
+        sub-sequence-json: string,
+    }
+
+    record tint-time-bucket {
+        bucket-start: timestamp-tz,
+        bucket-end: timestamp-tz,
+        sub-sequence-json: string,
+    }
+
+    tfloat-time-split: func(seq: tfloat-sequence, bucket-size: s64, origin: s64) -> list<tfloat-time-bucket>;
+    tint-time-split: func(seq: tint-sequence, bucket-size: s64, origin: s64) -> list<tint-time-bucket>;
+}
+
+/// Value-bucketed split of a temporal sequence (W4a #557)
+///
+/// Sibling of `time-split-ops` but bucketing on the value axis. For
+/// `tfloat-value-split` the interface DB lists `(binary, float64,
+/// float64)`; for `tint-value-split` it lists `(binary, int64,
+/// int64)`. The row shape carries the bucket bounds (typed to match
+/// the element type) and the same JSON-encoded sub-sequence.
+interface value-split-ops {
+    use types.{tfloat-sequence, tint-sequence};
+
+    record tfloat-value-bucket {
+        bucket-lower: f64,
+        bucket-upper: f64,
+        sub-sequence-json: string,
+    }
+
+    record tint-value-bucket {
+        bucket-lower: s64,
+        bucket-upper: s64,
+        sub-sequence-json: string,
+    }
+
+    tfloat-value-split: func(seq: tfloat-sequence, bucket-size: f64, origin: f64) -> list<tfloat-value-bucket>;
+    tint-value-split: func(seq: tint-sequence, bucket-size: s64, origin: s64) -> list<tint-value-bucket>;
+}
+
+/// Per-instant projection of a temporal sequence (W4a #557)
+///
+/// Each `*-to-rows` UDTF emits one row per instant in the input
+/// sequence, with the row carrying the timestamp plus the typed
+/// coordinate fields. Row shapes are all-primitive so the W4b row
+/// materialiser projects them directly without needing wit-value.
+///
+/// Cross-project coordination note: the upstream signature for each
+/// `*-to-rows` is fixed by the underlying temporal point/pose/
+/// cbuffer type. These declarations make the row schema explicit so
+/// the SQL surface can SELECT individual coordinate columns.
+interface to-rows-ops {
+    use types.{timestamp-tz, tgeompoint-sequence};
+    use tgeompoint3d-ops.{tgeompoint3d-sequence};
+    use tgeogpoint-ops.{tgeogpoint-sequence};
+    use tpose-ops.{tpose-sequence};
+    use tcbuffer-ops.{tcbuffer-sequence};
+
+    record tgeompoint-row {
+        timestamp: timestamp-tz,
+        x: f64,
+        y: f64,
+    }
+
+    record tgeompoint3d-row {
+        timestamp: timestamp-tz,
+        x: f64,
+        y: f64,
+        z: f64,
+    }
+
+    record tgeogpoint-row {
+        timestamp: timestamp-tz,
+        lon: f64,
+        lat: f64,
+    }
+
+    record tpose-row {
+        timestamp: timestamp-tz,
+        x: f64,
+        y: f64,
+        orientation: f64,
+    }
+
+    record tcbuffer-row {
+        timestamp: timestamp-tz,
+        x: f64,
+        y: f64,
+        radius: f64,
+    }
+
+    tgeompoint-to-rows: func(seq: tgeompoint-sequence) -> list<tgeompoint-row>;
+    tgeompoint3d-to-rows: func(seq: tgeompoint3d-sequence) -> list<tgeompoint3d-row>;
+    tgeogpoint-to-rows: func(seq: tgeogpoint-sequence) -> list<tgeogpoint-row>;
+    tpose-to-rows: func(seq: tpose-sequence) -> list<tpose-row>;
+    tcbuffer-to-rows: func(seq: tcbuffer-sequence) -> list<tcbuffer-row>;
+}
+
+/// Temporal-index lookups (W4a #557)
+///
+/// Lightweight per-instant matches against a temporal sequence
+/// (treated as an implicit index over its instant array). Each row
+/// carries `(instant-index, timestamp)` — both Integer-affinity
+/// columns. The five variants cover point lookup (`find-at`),
+/// directional scans (`find-after`, `find-before`), and range
+/// overlaps (`find-in-range`, `find-overlapping`).
+///
+/// Cross-project coordination note: the interface DB lists every
+/// variant as taking `(binary, int64[, int64])`. We canonicalise
+/// `binary` to `tfloat-sequence` here — the upstream impl may
+/// generalise to any temporal type, in which case the binary will
+/// still round-trip through wit-value (mobilitydb's record codecs
+/// produce structurally-identical bytes per record type). If
+/// callers pass a non-tfloat binary the WIT decoder will surface
+/// the mismatch at the host boundary.
+interface temporal-index-ops {
+    use types.{timestamp-tz, tfloat-sequence};
+
+    record temporal-index-match {
+        instant-index: u32,
+        timestamp: timestamp-tz,
+    }
+
+    temporal-index-find-at: func(seq: tfloat-sequence, t: timestamp-tz) -> list<temporal-index-match>;
+    temporal-index-find-after: func(seq: tfloat-sequence, t: timestamp-tz) -> list<temporal-index-match>;
+    temporal-index-find-before: func(seq: tfloat-sequence, t: timestamp-tz) -> list<temporal-index-match>;
+    temporal-index-find-in-range: func(seq: tfloat-sequence, t-lower: timestamp-tz, t-upper: timestamp-tz) -> list<temporal-index-match>;
+    temporal-index-find-overlapping: func(seq: tfloat-sequence, t-lower: timestamp-tz, t-upper: timestamp-tz) -> list<temporal-index-match>;
+}
+
+/// Spatial-index lookups (W4a #557)
+///
+/// Per-instant spatial matches against a `tgeompoint-sequence`. Row
+/// shape carries the instant index, the (x, y) coordinates of the
+/// matched instant, and a `distance` field measured in CRS units
+/// (matching the input's frame — no geodetic adjustment).
+///
+/// `find-in-envelope` takes a bounding box `(min-x, min-y, max-x,
+/// max-y)`; `find-within-distance` takes `(cx, cy, radius)`;
+/// `nearest` takes `(cx, cy)` and returns the single closest
+/// instant; `nearest-k` adds a `k: s32` cap.
+interface spatial-index-ops {
+    use types.{timestamp-tz, tgeompoint-sequence};
+
+    record spatial-index-match {
+        instant-index: u32,
+        timestamp: timestamp-tz,
+        x: f64,
+        y: f64,
+        distance: f64,
+    }
+
+    spatial-index-find-in-envelope: func(
+        seq: tgeompoint-sequence,
+        min-x: f64,
+        min-y: f64,
+        max-x: f64,
+        max-y: f64,
+    ) -> list<spatial-index-match>;
+    spatial-index-find-within-distance: func(
+        seq: tgeompoint-sequence,
+        cx: f64,
+        cy: f64,
+        radius: f64,
+    ) -> list<spatial-index-match>;
+    spatial-index-nearest: func(
+        seq: tgeompoint-sequence,
+        cx: f64,
+        cy: f64,
+    ) -> list<spatial-index-match>;
+    spatial-index-nearest-k: func(
+        seq: tgeompoint-sequence,
+        cx: f64,
+        cy: f64,
+        k: s32,
+    ) -> list<spatial-index-match>;
+}
+
+/// Sequence → JSON degenerate UDTF (W4a #557)
+///
+/// `sequence-json` takes a single temporal sequence and emits a
+/// single row carrying `(seq-id, json)`. The `seq-id` is a stable
+/// zero-based identifier (always 0 for single-sequence input,
+/// reserved for future batched extension); the `json` field is the
+/// `tfloat-to-json`-shaped encoding. The UDTF shape (rather than a
+/// scalar text returns) keeps this addressable by name in the SQL
+/// surface alongside the other index/join UDTFs.
+interface sequence-json-ops {
+    use types.{tfloat-sequence};
+
+    record sequence-json-row {
+        seq-id: u32,
+        json: string,
+    }
+
+    sequence-json: func(seq: tfloat-sequence) -> list<sequence-json-row>;
+}
+
+/// The complete temporal component world
+world temporal-component {
+    export types;
+    export tint-ops;
+    export tfloat-ops;
+    export tgeompoint-ops;
+    export similarity-ops;
+    export pattern-ops;
+    export serde-ops;
+    export join-ops;
+    export arrow-ops;
+    export stbox-ops;
+    export stindex-ops;
+    export ttext-ops;
+    export tbool-ops;
+    export spans-ops;
+    export sets-ops;
+    export spansets-ops;
+    export tgeompoint3d-ops;
+    export tpose-ops;
+    export tcbuffer-ops;
+    export tgeometry-ops;
+    export tgeogpoint-ops;
+    export bitemporal-float-ops;
+    export bitemporal-int-ops;
+    export bitemporal-bool-ops;
+    export bitemporal-text-ops;
+    export tnpoint-ops;
+    export other-indexes-ops;
+    export analytics-ops;
+    export clustering-ops;
+    export similarity-extended-ops;
+    export temporal-aggregate-ops;
+    export restrictions-ops;
+    export comparisons-ops;
+    export arithmetic-ops;
+    export statistics-ops;
+    export ttext-strings-ops;
+    export sets-extended-ops;
+    export trajectory-restrictions-ops;
+    export tcbuffer-extended-ops;
+    export tpose-extended-ops;
+    export tnpoint-extended-ops;
+    export stbox3d-ops;
+    export bitemporal-residue-ops;
+    export tfloat-math-ops;
+    export tint-math-ops;
+    export tgeompoint-extended-ops;
+    export tgeompoint-detection-ops;
+    export tstzspan-ops;
+    export tstzset-ops;
+    export span-extras-ops;
+    export set-extras-ops;
+    export temporal-relations-ops;
+    export textset-ops;
+    export near-done-ops;
+    /// W4a (#557) — UDTF coverage expansion
+    export typed-join-ops;
+    export nearest-join-ops;
+    export time-split-ops;
+    export value-split-ops;
+    export to-rows-ops;
+    export temporal-index-ops;
+    export spatial-index-ops;
+    export sequence-json-ops;
+}
