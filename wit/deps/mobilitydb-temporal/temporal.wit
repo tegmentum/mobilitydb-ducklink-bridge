@@ -1759,6 +1759,7 @@ interface temporal-aggregate-ops {
     use tpose-ops.{tpose-sequence};
     use tcbuffer-ops.{tcbuffer-sequence};
     use tgeompoint-ops.{tgeompoint-sequence};
+    use ttext-ops.{ttext-sequence};
     use stbox-ops.{stbox};
 
     /// Element-wise minimum across multiple float sequences at each instant.
@@ -1807,6 +1808,33 @@ interface temporal-aggregate-ops {
     /// Per-base-type tcount also added for tgeompoint to match the
     /// other point types from M6.
     tgeompoint-temporal-count: func(sequences: list<tgeompoint-sequence>) -> option<tint-sequence>;
+
+    /// M7 (2026-06-28) — Whole-aggregate (set-shaped) reductions
+    /// over tint sequences. These collapse across both the
+    /// instant axis and the row axis, returning a single scalar
+    /// rather than a per-instant sequence. Useful as the
+    /// finalize-time output of SQL aggregate functions like
+    /// `COUNT`, `MIN`, `MAX` over a tint column.
+
+    /// Count of input sequences that contain at least one
+    /// instant. Empty sequences (after the wit→core conversion
+    /// drops malformed input) are excluded.
+    tint-count-aggregate: func(sequences: list<tint-sequence>) -> u64;
+
+    /// Minimum value across the instants of all input sequences.
+    /// Returns none if no sequence has any instant.
+    tint-min-value-aggregate: func(sequences: list<tint-sequence>) -> option<s64>;
+
+    /// Maximum value across the instants of all input sequences.
+    /// Returns none if no sequence has any instant.
+    tint-max-value-aggregate: func(sequences: list<tint-sequence>) -> option<s64>;
+
+    /// String concatenation aggregate over ttext sequences. The
+    /// instants of every input sequence are concatenated in input
+    /// order (sequence-major, then instant-major) and returned as
+    /// a single ttext sequence. Returns none when the inputs hold
+    /// no instants.
+    ttext-concat-aggregate: func(sequences: list<ttext-sequence>) -> option<ttext-sequence>;
 }
 
 interface clustering-ops {
