@@ -148,6 +148,13 @@ interface tint-ops {
     /// value(0) = 0. Stepwise interpolation.
     /// Mirrors mdb_temporal_core::tint::tint_diff.
     tint-diff: func(seq: tint-sequence) -> tint-sequence;
+
+    /// Batch 3 (2026-06-28) — MEOS-style EWKT text parsers. Non-spatial
+    /// temporal types just use the bracketed `[value@timestamp, ...]`
+    /// representation; the `EWKT` name is kept for consistency with the
+    /// spatial variants that carry an `SRID=N;` prefix.
+    tint-instant-from-ewkt:  func(text: string) -> option<tint-instant>;
+    tint-sequence-from-ewkt: func(text: string) -> option<tint-sequence>;
 }
 
 /// Operations on temporal float types
@@ -241,6 +248,13 @@ interface tfloat-ops {
         seq: tfloat-sequence,
         max-gap-micros: s64,
     ) -> tfloat-sequence;
+
+    /// Batch 3 (2026-06-28) — MEOS-style EWKT text parsers. Non-spatial
+    /// temporal types just use the bracketed `[value@timestamp, ...]`
+    /// representation; the `EWKT` name is kept for consistency with the
+    /// spatial variants that carry an `SRID=N;` prefix.
+    tfloat-instant-from-ewkt:  func(text: string) -> option<tfloat-instant>;
+    tfloat-sequence-from-ewkt: func(text: string) -> option<tfloat-sequence>;
 }
 
 /// Operations on temporal geometry point types (trajectories)
@@ -413,6 +427,14 @@ interface tgeompoint-ops {
     /// Per-segment initial bearings (geodetic) in degrees, [0, 360),
     /// emitted as a tfloat sequence aligned with the input timestamps.
     tgeogpoint-azimuths-geodetic: func(seq: tgeompoint-sequence) -> option<tfloat-sequence>;
+
+    /// Batch 3 (2026-06-28) — EWKT text parsers. Accept either
+    /// bare WKT (`POINT(x y)@2023-01-01 00:00:00+00`) or an
+    /// `SRID=N;` prefix; SRID is discarded (the 2D variant is
+    /// projection-agnostic). Companion to the existing
+    /// `tgeompoint3d-from-ewkt` for the 3D variant.
+    tgeompoint-instant-from-ewkt:  func(text: string) -> option<tgeompoint-instant>;
+    tgeompoint-sequence-from-ewkt: func(text: string) -> option<tgeompoint-sequence>;
 }
 
 /// Trajectory similarity and analysis operations
@@ -906,6 +928,10 @@ interface ttext-ops {
     ttext-to-csv: func(seq: ttext-sequence) -> string;
     /// CSV decode. Returns None on parse failure.
     ttext-from-csv: func(csv: string) -> option<ttext-sequence>;
+
+    /// Batch 3 (2026-06-28) — MEOS-style EWKT text parsers.
+    ttext-instant-from-ewkt:  func(text: string) -> option<ttext-instant>;
+    ttext-sequence-from-ewkt: func(text: string) -> option<ttext-sequence>;
 }
 
 /// Temporal booleans (tbool) — phase 2 of the WIT expansion arc.
@@ -965,6 +991,13 @@ interface tbool-ops {
     tbool-to-csv: func(seq: tbool-sequence) -> string;
     /// CSV decode. Returns None on parse failure.
     tbool-from-csv: func(csv: string) -> option<tbool-sequence>;
+
+    /// Batch 3 (2026-06-28) — MEOS-style EWKT text parsers. Non-spatial
+    /// temporal types just use the bracketed `[value@timestamp, ...]`
+    /// representation; the `EWKT` name is kept for consistency with the
+    /// spatial variants that carry an `SRID=N;` prefix.
+    tbool-instant-from-ewkt:  func(text: string) -> option<tbool-instant>;
+    tbool-sequence-from-ewkt: func(text: string) -> option<tbool-sequence>;
 }
 
 /// Span types (range types) — phase 3 of WIT expansion. Three
@@ -1835,6 +1868,20 @@ interface temporal-aggregate-ops {
     /// a single ttext sequence. Returns none when the inputs hold
     /// no instants.
     ttext-concat-aggregate: func(sequences: list<ttext-sequence>) -> option<ttext-sequence>;
+
+    /// Batch 2 (2026-06-28) — additional whole-aggregate scalars.
+
+    /// Sample variance (n-1 denominator) over the values at every
+    /// instant of every input tfloat sequence. Two-pass mean +
+    /// sum-of-squared-deviations. Returns none for empty input or
+    /// when fewer than two instants are present overall.
+    tfloat-variance-aggregate: func(sequences: list<tfloat-sequence>) -> option<f64>;
+
+    /// (min, max) tuple over the values at every instant of every
+    /// input tint sequence. Returns none if no sequence has any
+    /// instant. Scalar shape — the per-instant range alternative
+    /// would be a window function, not an aggregate.
+    tint-range-aggregate: func(sequences: list<tint-sequence>) -> option<tuple<s64, s64>>;
 }
 
 interface clustering-ops {
@@ -2230,6 +2277,13 @@ interface tgeogpoint-ops {
         lon: f64,
         lat: f64,
     ) -> option<f64>;
+
+    /// Batch 3 (2026-06-28) — EWKT text parsers. Accept either
+    /// bare WKT (`POINT(lon lat)@2023-01-01 00:00:00+00`) or an
+    /// `SRID=N;` prefix. SRID is discarded — geography is always
+    /// WGS84 lon/lat in this crate. Returns none on parse failure.
+    tgeogpoint-instant-from-ewkt:  func(text: string) -> option<tgeogpoint-instant>;
+    tgeogpoint-sequence-from-ewkt: func(text: string) -> option<tgeogpoint-sequence>;
 }
 
 interface tgeometry-ops {

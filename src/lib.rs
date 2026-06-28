@@ -421,6 +421,93 @@ fn ret_to_witvalue_time_period(
     }))
 }
 
+fn arg_witvalue_tint_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<bindings::mobilitydb::temporal::types::TintInstant, types::Duckerror> {
+    let cmplx = match args.get(idx) {
+        Some(types::Duckvalue::Complex(c)) => c,
+        _ => {
+            return Err(types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be COMPLEX (wit-value record)"
+            )))
+        }
+    };
+    serde_json::from_str::<bindings::mobilitydb::temporal::types::TintInstant>(&cmplx.json)
+        .map_err(|e| types::Duckerror::Invalidargument(format!("{name}: decode arg {idx}: {}", e)))
+}
+
+fn parse_json_list_record_tint_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<Vec<bindings::mobilitydb::temporal::types::TintInstant>, types::Duckerror> {
+    let text = dv_text(args, idx, name)?;
+    serde_json::from_str::<Vec<bindings::mobilitydb::temporal::types::TintInstant>>(text).map_err(
+        |e| {
+            types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be JSON array of tint-instant ({e})"
+            ))
+        },
+    )
+}
+
+fn ret_to_witvalue_tint_instant(
+    upstream: bindings::mobilitydb::temporal::types::TintInstant,
+) -> Result<types::Duckvalue, types::Duckerror> {
+    let json = serde_json::to_string(&upstream)
+        .map_err(|e| types::Duckerror::Internal(format!("encode tint_instant wit-value: {}", e)))?;
+    Ok(types::Duckvalue::Complex(types::Complexvalue {
+        type_expr: "mobilitydb:temporal@0.1.0/types/tint-instant".into(),
+        json,
+    }))
+}
+
+fn arg_witvalue_tfloat_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<bindings::mobilitydb::temporal::types::TfloatInstant, types::Duckerror> {
+    let cmplx = match args.get(idx) {
+        Some(types::Duckvalue::Complex(c)) => c,
+        _ => {
+            return Err(types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be COMPLEX (wit-value record)"
+            )))
+        }
+    };
+    serde_json::from_str::<bindings::mobilitydb::temporal::types::TfloatInstant>(&cmplx.json)
+        .map_err(|e| types::Duckerror::Invalidargument(format!("{name}: decode arg {idx}: {}", e)))
+}
+
+fn parse_json_list_record_tfloat_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<Vec<bindings::mobilitydb::temporal::types::TfloatInstant>, types::Duckerror> {
+    let text = dv_text(args, idx, name)?;
+    serde_json::from_str::<Vec<bindings::mobilitydb::temporal::types::TfloatInstant>>(text).map_err(
+        |e| {
+            types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be JSON array of tfloat-instant ({e})"
+            ))
+        },
+    )
+}
+
+fn ret_to_witvalue_tfloat_instant(
+    upstream: bindings::mobilitydb::temporal::types::TfloatInstant,
+) -> Result<types::Duckvalue, types::Duckerror> {
+    let json = serde_json::to_string(&upstream).map_err(|e| {
+        types::Duckerror::Internal(format!("encode tfloat_instant wit-value: {}", e))
+    })?;
+    Ok(types::Duckvalue::Complex(types::Complexvalue {
+        type_expr: "mobilitydb:temporal@0.1.0/types/tfloat-instant".into(),
+        json,
+    }))
+}
+
 fn arg_witvalue_tint_sequence(
     args: &[types::Duckvalue],
     idx: usize,
@@ -547,6 +634,49 @@ fn ret_to_witvalue_geom_point(
         .map_err(|e| types::Duckerror::Internal(format!("encode geom_point wit-value: {}", e)))?;
     Ok(types::Duckvalue::Complex(types::Complexvalue {
         type_expr: "mobilitydb:temporal@0.1.0/types/geom-point".into(),
+        json,
+    }))
+}
+
+fn arg_witvalue_tgeompoint_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<bindings::mobilitydb::temporal::types::TgeompointInstant, types::Duckerror> {
+    let cmplx = match args.get(idx) {
+        Some(types::Duckvalue::Complex(c)) => c,
+        _ => {
+            return Err(types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be COMPLEX (wit-value record)"
+            )))
+        }
+    };
+    serde_json::from_str::<bindings::mobilitydb::temporal::types::TgeompointInstant>(&cmplx.json)
+        .map_err(|e| types::Duckerror::Invalidargument(format!("{name}: decode arg {idx}: {}", e)))
+}
+
+fn parse_json_list_record_tgeompoint_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<Vec<bindings::mobilitydb::temporal::types::TgeompointInstant>, types::Duckerror> {
+    let text = dv_text(args, idx, name)?;
+    serde_json::from_str::<Vec<bindings::mobilitydb::temporal::types::TgeompointInstant>>(text)
+        .map_err(|e| {
+            types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be JSON array of tgeompoint-instant ({e})"
+            ))
+        })
+}
+
+fn ret_to_witvalue_tgeompoint_instant(
+    upstream: bindings::mobilitydb::temporal::types::TgeompointInstant,
+) -> Result<types::Duckvalue, types::Duckerror> {
+    let json = serde_json::to_string(&upstream).map_err(|e| {
+        types::Duckerror::Internal(format!("encode tgeompoint_instant wit-value: {}", e))
+    })?;
+    Ok(types::Duckvalue::Complex(types::Complexvalue {
+        type_expr: "mobilitydb:temporal@0.1.0/types/tgeompoint-instant".into(),
         json,
     }))
 }
@@ -994,6 +1124,49 @@ fn ret_to_witvalue_stindex_entry(
     }))
 }
 
+fn arg_witvalue_ttext_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<bindings::mobilitydb::temporal::ttext_ops::TtextInstant, types::Duckerror> {
+    let cmplx = match args.get(idx) {
+        Some(types::Duckvalue::Complex(c)) => c,
+        _ => {
+            return Err(types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be COMPLEX (wit-value record)"
+            )))
+        }
+    };
+    serde_json::from_str::<bindings::mobilitydb::temporal::ttext_ops::TtextInstant>(&cmplx.json)
+        .map_err(|e| types::Duckerror::Invalidargument(format!("{name}: decode arg {idx}: {}", e)))
+}
+
+fn parse_json_list_record_ttext_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<Vec<bindings::mobilitydb::temporal::ttext_ops::TtextInstant>, types::Duckerror> {
+    let text = dv_text(args, idx, name)?;
+    serde_json::from_str::<Vec<bindings::mobilitydb::temporal::ttext_ops::TtextInstant>>(text)
+        .map_err(|e| {
+            types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be JSON array of ttext-instant ({e})"
+            ))
+        })
+}
+
+fn ret_to_witvalue_ttext_instant(
+    upstream: bindings::mobilitydb::temporal::ttext_ops::TtextInstant,
+) -> Result<types::Duckvalue, types::Duckerror> {
+    let json = serde_json::to_string(&upstream).map_err(|e| {
+        types::Duckerror::Internal(format!("encode ttext_instant wit-value: {}", e))
+    })?;
+    Ok(types::Duckvalue::Complex(types::Complexvalue {
+        type_expr: "mobilitydb:temporal@0.1.0/ttext-ops/ttext-instant".into(),
+        json,
+    }))
+}
+
 fn arg_witvalue_ttext_sequence(
     args: &[types::Duckvalue],
     idx: usize,
@@ -1033,6 +1206,49 @@ fn ret_to_witvalue_ttext_sequence(
     })?;
     Ok(types::Duckvalue::Complex(types::Complexvalue {
         type_expr: "mobilitydb:temporal@0.1.0/ttext-ops/ttext-sequence".into(),
+        json,
+    }))
+}
+
+fn arg_witvalue_tbool_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<bindings::mobilitydb::temporal::tbool_ops::TboolInstant, types::Duckerror> {
+    let cmplx = match args.get(idx) {
+        Some(types::Duckvalue::Complex(c)) => c,
+        _ => {
+            return Err(types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be COMPLEX (wit-value record)"
+            )))
+        }
+    };
+    serde_json::from_str::<bindings::mobilitydb::temporal::tbool_ops::TboolInstant>(&cmplx.json)
+        .map_err(|e| types::Duckerror::Invalidargument(format!("{name}: decode arg {idx}: {}", e)))
+}
+
+fn parse_json_list_record_tbool_instant(
+    args: &[types::Duckvalue],
+    idx: usize,
+    name: &str,
+) -> Result<Vec<bindings::mobilitydb::temporal::tbool_ops::TboolInstant>, types::Duckerror> {
+    let text = dv_text(args, idx, name)?;
+    serde_json::from_str::<Vec<bindings::mobilitydb::temporal::tbool_ops::TboolInstant>>(text)
+        .map_err(|e| {
+            types::Duckerror::Invalidargument(format!(
+                "{name}: arg {idx} must be JSON array of tbool-instant ({e})"
+            ))
+        })
+}
+
+fn ret_to_witvalue_tbool_instant(
+    upstream: bindings::mobilitydb::temporal::tbool_ops::TboolInstant,
+) -> Result<types::Duckvalue, types::Duckerror> {
+    let json = serde_json::to_string(&upstream).map_err(|e| {
+        types::Duckerror::Internal(format!("encode tbool_instant wit-value: {}", e))
+    })?;
+    Ok(types::Duckvalue::Complex(types::Complexvalue {
+        type_expr: "mobilitydb:temporal@0.1.0/tbool-ops/tbool-instant".into(),
         json,
     }))
 }
@@ -4346,6 +4562,20 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                 }
             }
             300usize => {
+                let arg0 = dv_text(&args, 0, "tbool_from_ewkt")?;
+                match tbool_ops::tbool_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_tbool_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            301usize => {
+                let arg0 = dv_text(&args, 0, "tbool_instant_from_ewkt")?;
+                match tbool_ops::tbool_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_tbool_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            302usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_minus_period")?;
                 let arg1 = dv_i64(&args, 1, "tbool_minus_period")?;
                 let arg2 = dv_i64(&args, 2, "tbool_minus_period")?;
@@ -4354,7 +4584,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            301usize => {
+            303usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_minus_value")?;
                 let arg1 = dv_bool(&args, 1, "tbool_minus_value")?;
                 match restrictions_ops::tbool_minus_value(&arg0, arg1) {
@@ -4362,17 +4592,17 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            302usize => {
+            304usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_not")?;
                 ret_to_witvalue_tbool_sequence(tbool_ops::tbool_not(&arg0))
             }
-            303usize => {
+            305usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     tbool_ops::tbool_num_instants(&arg0) as i64,
                 ))
             }
-            304usize => {
+            306usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_or")?;
                 let arg1 = arg_witvalue_tbool_sequence(&args, 1, "tbool_or")?;
                 match tbool_ops::tbool_or(&arg0, &arg1) {
@@ -4380,40 +4610,40 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            305usize => {
+            307usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_start_timestamp")?;
                 Ok(match tbool_ops::tbool_start_timestamp(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            306usize => {
+            308usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_start_value")?;
                 Ok(match tbool_ops::tbool_start_value(&arg0) {
                     Some(v) => types::Duckvalue::Boolean(v),
                     None => types::Duckvalue::Null,
                 })
             }
-            307usize => {
+            309usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_time_span")?;
                 match tbool_ops::tbool_time_span(&arg0) {
                     Some(__rec) => ret_to_witvalue_time_period(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            308usize => {
+            310usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_to_csv")?;
                 Ok(types::Duckvalue::Text(
                     (tbool_ops::tbool_to_csv(&arg0)).into(),
                 ))
             }
-            309usize => {
+            311usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_to_json")?;
                 Ok(types::Duckvalue::Text(
                     (tbool_ops::tbool_to_json(&arg0)).into(),
                 ))
             }
-            310usize => {
+            312usize => {
                 let arg0 = arg_witvalue_tbool_sequence(&args, 0, "tbool_value_at")?;
                 let arg1 = dv_i64(&args, 1, "tbool_value_at")?;
                 Ok(match tbool_ops::tbool_value_at(&arg0, arg1) {
@@ -4421,20 +4651,20 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            311usize => {
+            313usize => {
                 let arg0 = dv_text(&args, 0, "tbox_from_text")?;
                 match stbox_ops::tbox_from_text(arg0) {
                     Some(__rec) => ret_to_witvalue_tbox(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            312usize => {
+            314usize => {
                 let arg0 = arg_witvalue_tbox(&args, 0, "tbox_to_text")?;
                 Ok(types::Duckvalue::Text(
                     (stbox_ops::tbox_to_text(arg0)).into(),
                 ))
             }
-            313usize => {
+            315usize => {
                 let arg0 =
                     arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_always_contains_point")?;
                 let arg1 = dv_f64(&args, 1, "tcbuffer_always_contains_point")?;
@@ -4443,7 +4673,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tcbuffer_extended_ops::tcbuffer_always_contains_point(&arg0, arg1, arg2),
                 ))
             }
-            314usize => {
+            316usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_area_at")?;
                 let arg1 = dv_i64(&args, 1, "tcbuffer_area_at")?;
                 Ok(match tcbuffer_ops::tcbuffer_area_at(&arg0, arg1) {
@@ -4451,27 +4681,27 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            315usize => {
+            317usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_avg_area")?;
                 Ok(match tcbuffer_extended_ops::tcbuffer_avg_area(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            316usize => {
+            318usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_avg_radius")?;
                 Ok(match tcbuffer_extended_ops::tcbuffer_avg_radius(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            317usize => {
+            319usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_center_path_length")?;
                 Ok(types::Duckvalue::Float64(
                     tcbuffer_extended_ops::tcbuffer_center_path_length(&arg0),
                 ))
             }
-            318usize => {
+            320usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_contains_point_at")?;
                 let arg1 = dv_f64(&args, 1, "tcbuffer_contains_point_at")?;
                 let arg2 = dv_f64(&args, 2, "tcbuffer_contains_point_at")?;
@@ -4480,7 +4710,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tcbuffer_extended_ops::tcbuffer_contains_point_at(&arg0, arg1, arg2, arg3),
                 ))
             }
-            319usize => {
+            321usize => {
                 let arg0 =
                     arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_ever_contains_point")?;
                 let arg1 = dv_f64(&args, 1, "tcbuffer_ever_contains_point")?;
@@ -4489,50 +4719,50 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tcbuffer_extended_ops::tcbuffer_ever_contains_point(&arg0, arg1, arg2),
                 ))
             }
-            320usize => {
+            322usize => {
                 let arg0 = dv_text(&args, 0, "tcbuffer_from_ewkt")?;
                 match tcbuffer_ops::tcbuffer_from_ewkt(arg0) {
                     Some(__rec) => ret_to_witvalue_tcbuffer_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            321usize => {
+            323usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_get_area")?;
                 ret_to_witvalue_tfloat_sequence(tcbuffer_extended_ops::tcbuffer_get_area(&arg0))
             }
-            322usize => {
+            324usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_get_center_x")?;
                 ret_to_witvalue_tfloat_sequence(tcbuffer_extended_ops::tcbuffer_get_center_x(&arg0))
             }
-            323usize => {
+            325usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_get_center_y")?;
                 ret_to_witvalue_tfloat_sequence(tcbuffer_extended_ops::tcbuffer_get_center_y(&arg0))
             }
-            324usize => {
+            326usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_get_radius")?;
                 ret_to_witvalue_tfloat_sequence(tcbuffer_extended_ops::tcbuffer_get_radius(&arg0))
             }
-            325usize => {
+            327usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_max_radius")?;
                 Ok(match tcbuffer_ops::tcbuffer_max_radius(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            326usize => {
+            328usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_min_radius")?;
                 Ok(match tcbuffer_ops::tcbuffer_min_radius(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            327usize => {
+            329usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     tcbuffer_ops::tcbuffer_num_instants(&arg0) as i64,
                 ))
             }
-            328usize => {
+            330usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_radius_at")?;
                 let arg1 = dv_i64(&args, 1, "tcbuffer_radius_at")?;
                 Ok(match tcbuffer_ops::tcbuffer_radius_at(&arg0, arg1) {
@@ -4540,38 +4770,38 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            329usize => {
+            331usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_swept_area")?;
                 Ok(types::Duckvalue::Float64(
                     tcbuffer_extended_ops::tcbuffer_swept_area(&arg0),
                 ))
             }
-            330usize => {
+            332usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_time_span")?;
                 match tcbuffer_ops::tcbuffer_time_span(&arg0) {
                     Some(__rec) => ret_to_witvalue_time_period(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            331usize => {
+            333usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_to_ewkt")?;
                 Ok(types::Duckvalue::Text(
                     (tcbuffer_ops::tcbuffer_to_ewkt(&arg0)).into(),
                 ))
             }
-            332usize => {
+            334usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_to_tgeompoint")?;
                 ret_to_witvalue_tgeompoint_sequence(tcbuffer_extended_ops::tcbuffer_to_tgeompoint(
                     &arg0,
                 ))
             }
-            333usize => {
+            335usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_total_area")?;
                 Ok(types::Duckvalue::Float64(
                     tcbuffer_extended_ops::tcbuffer_total_area(&arg0),
                 ))
             }
-            334usize => {
+            336usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_x_at")?;
                 let arg1 = dv_i64(&args, 1, "tcbuffer_x_at")?;
                 Ok(match tcbuffer_ops::tcbuffer_x_at(&arg0, arg1) {
@@ -4579,7 +4809,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            335usize => {
+            337usize => {
                 let arg0 = arg_witvalue_tcbuffer_sequence(&args, 0, "tcbuffer_y_at")?;
                 let arg1 = dv_i64(&args, 1, "tcbuffer_y_at")?;
                 Ok(match tcbuffer_ops::tcbuffer_y_at(&arg0, arg1) {
@@ -4587,70 +4817,70 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            336usize => {
+            338usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "temporal_contains")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "temporal_contains")?;
                 Ok(types::Duckvalue::Boolean(
                     temporal_relations_ops::temporal_contains(arg0, arg1),
                 ))
             }
-            337usize => {
+            339usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "temporal_during")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "temporal_during")?;
                 Ok(types::Duckvalue::Boolean(
                     temporal_relations_ops::temporal_during(arg0, arg1),
                 ))
             }
-            338usize => {
+            340usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "temporal_finishes")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "temporal_finishes")?;
                 Ok(types::Duckvalue::Boolean(
                     temporal_relations_ops::temporal_finishes(arg0, arg1),
                 ))
             }
-            339usize => {
+            341usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "temporal_follows")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "temporal_follows")?;
                 Ok(types::Duckvalue::Boolean(
                     temporal_relations_ops::temporal_follows(arg0, arg1),
                 ))
             }
-            340usize => {
+            342usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "temporal_meets")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "temporal_meets")?;
                 Ok(types::Duckvalue::Boolean(
                     temporal_relations_ops::temporal_meets(arg0, arg1),
                 ))
             }
-            341usize => {
+            343usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "temporal_overlaps")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "temporal_overlaps")?;
                 Ok(types::Duckvalue::Boolean(
                     temporal_relations_ops::temporal_overlaps(arg0, arg1),
                 ))
             }
-            342usize => {
+            344usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "temporal_precedes")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "temporal_precedes")?;
                 Ok(types::Duckvalue::Boolean(
                     temporal_relations_ops::temporal_precedes(arg0, arg1),
                 ))
             }
-            343usize => {
+            345usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "temporal_starts")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "temporal_starts")?;
                 Ok(types::Duckvalue::Boolean(
                     temporal_relations_ops::temporal_starts(arg0, arg1),
                 ))
             }
-            344usize => {
+            346usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_contains")?;
                 let arg1 = dv_text(&args, 1, "textset_contains")?;
                 Ok(types::Duckvalue::Boolean(textset_ops::textset_contains(
                     &arg0, arg1,
                 )))
             }
-            345usize => {
+            347usize => {
                 let arg0 = dv_text(&args, 0, "textset_from_text")?;
                 {
                     let __r = textset_ops::textset_from_text(arg0);
@@ -4660,7 +4890,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            346usize => {
+            348usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_intersection")?;
                 let arg1: Vec<String> = parse_json_list_string(&args, 1, "textset_intersection")?;
                 {
@@ -4671,34 +4901,34 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            347usize => {
+            349usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_is_disjoint")?;
                 let arg1: Vec<String> = parse_json_list_string(&args, 1, "textset_is_disjoint")?;
                 Ok(types::Duckvalue::Boolean(
                     sets_extended_ops::textset_is_disjoint(&arg0, &arg1),
                 ))
             }
-            348usize => {
+            350usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_is_subset")?;
                 let arg1: Vec<String> = parse_json_list_string(&args, 1, "textset_is_subset")?;
                 Ok(types::Duckvalue::Boolean(
                     sets_extended_ops::textset_is_subset(&arg0, &arg1),
                 ))
             }
-            349usize => {
+            351usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_is_superset")?;
                 let arg1: Vec<String> = parse_json_list_string(&args, 1, "textset_is_superset")?;
                 Ok(types::Duckvalue::Boolean(textset_ops::textset_is_superset(
                     &arg0, &arg1,
                 )))
             }
-            350usize => {
+            352usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_len")?;
                 Ok(types::Duckvalue::Int64(
                     textset_ops::textset_len(&arg0) as i64
                 ))
             }
-            351usize => {
+            353usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_make")?;
                 {
                     let __r = textset_ops::textset_make(&arg0);
@@ -4708,21 +4938,21 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            352usize => {
+            354usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_max")?;
                 Ok(match textset_ops::textset_max(&arg0) {
                     Some(v) => types::Duckvalue::Text(v.into()),
                     None => types::Duckvalue::Null,
                 })
             }
-            353usize => {
+            355usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_min")?;
                 Ok(match textset_ops::textset_min(&arg0) {
                     Some(v) => types::Duckvalue::Text(v.into()),
                     None => types::Duckvalue::Null,
                 })
             }
-            354usize => {
+            356usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_minus")?;
                 let arg1: Vec<String> = parse_json_list_string(&args, 1, "textset_minus")?;
                 {
@@ -4733,7 +4963,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            355usize => {
+            357usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_symdiff")?;
                 let arg1: Vec<String> = parse_json_list_string(&args, 1, "textset_symdiff")?;
                 {
@@ -4744,13 +4974,13 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            356usize => {
+            358usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_to_text")?;
                 Ok(types::Duckvalue::Text(
                     (textset_ops::textset_to_text(&arg0)).into(),
                 ))
             }
-            357usize => {
+            359usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_union")?;
                 let arg1: Vec<String> = parse_json_list_string(&args, 1, "textset_union")?;
                 {
@@ -4761,7 +4991,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            358usize => {
+            360usize => {
                 let arg0: Vec<String> = parse_json_list_string(&args, 0, "textset_values")?;
                 {
                     let __r = textset_ops::textset_values(&arg0);
@@ -4771,11 +5001,11 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            359usize => {
+            361usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_abs")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_abs(&arg0))
             }
-            360usize => {
+            362usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_add")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_add")?;
                 match arithmetic_ops::tfloat_add(&arg0, &arg1) {
@@ -4783,68 +5013,68 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            361usize => {
+            363usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_add_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_add_scalar")?;
                 ret_to_witvalue_tfloat_sequence(arithmetic_ops::tfloat_add_scalar(&arg0, arg1))
             }
-            362usize => {
+            364usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_always_eq")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_always_eq")?;
                 Ok(types::Duckvalue::Boolean(
                     comparisons_ops::tfloat_always_eq(&arg0, arg1),
                 ))
             }
-            363usize => {
+            365usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_always_eq_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_always_eq_scalar")?;
                 Ok(types::Duckvalue::Boolean(
                     comparisons_ops::tfloat_always_eq(&arg0, arg1),
                 ))
             }
-            364usize => {
+            366usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_always_gt")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_always_gt")?;
                 Ok(types::Duckvalue::Boolean(
                     comparisons_ops::tfloat_always_gt(&arg0, arg1),
                 ))
             }
-            365usize => {
+            367usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_always_gt_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_always_gt_scalar")?;
                 Ok(types::Duckvalue::Boolean(
                     comparisons_ops::tfloat_always_gt(&arg0, arg1),
                 ))
             }
-            366usize => {
+            368usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_always_lt")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_always_lt")?;
                 Ok(types::Duckvalue::Boolean(
                     comparisons_ops::tfloat_always_lt(&arg0, arg1),
                 ))
             }
-            367usize => {
+            369usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_always_lt_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_always_lt_scalar")?;
                 Ok(types::Duckvalue::Boolean(
                     comparisons_ops::tfloat_always_lt(&arg0, arg1),
                 ))
             }
-            368usize => {
+            370usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_at_max")?;
                 match restrictions_ops::tfloat_at_max(&arg0) {
                     Some(__rec) => ret_to_witvalue_tfloat_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            369usize => {
+            371usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_at_min")?;
                 match restrictions_ops::tfloat_at_min(&arg0) {
                     Some(__rec) => ret_to_witvalue_tfloat_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            370usize => {
+            372usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_at_period")?;
                 let arg1 = dv_i64(&args, 1, "tfloat_at_period")?;
                 let arg2 = dv_i64(&args, 2, "tfloat_at_period")?;
@@ -4853,7 +5083,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            371usize => {
+            373usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_at_value")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_at_value")?;
                 match restrictions_ops::tfloat_at_value(&arg0, arg1) {
@@ -4861,25 +5091,25 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            372usize => {
+            374usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_cos")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_cos(&arg0))
             }
-            373usize => {
+            375usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_derivative")?;
                 match statistics_ops::tfloat_derivative(&arg0) {
                     Some(__rec) => ret_to_witvalue_tfloat_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            374usize => {
+            376usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_derivative_wit")?;
                 match statistics_ops::tfloat_derivative(&arg0) {
                     Some(__rec) => ret_to_witvalue_tfloat_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            375usize => {
+            377usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_detect_periodicity")?;
                 let arg1 = dv_i64(&args, 1, "tfloat_detect_periodicity")? as u32;
                 Ok(match tfloat_ops::tfloat_detect_periodicity(&arg0, arg1) {
@@ -4887,7 +5117,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            376usize => {
+            378usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_div")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_div")?;
                 match arithmetic_ops::tfloat_div(&arg0, &arg1) {
@@ -4895,7 +5125,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            377usize => {
+            379usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_div_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_div_scalar")?;
                 match arithmetic_ops::tfloat_div_scalar(&arg0, arg1) {
@@ -4903,95 +5133,109 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            378usize => {
+            380usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_ever_eq")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_ever_eq")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tfloat_ever_eq(
                     &arg0, arg1,
                 )))
             }
-            379usize => {
+            381usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_ever_eq_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_ever_eq_scalar")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tfloat_ever_eq(
                     &arg0, arg1,
                 )))
             }
-            380usize => {
+            382usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_ever_gt")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_ever_gt")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tfloat_ever_gt(
                     &arg0, arg1,
                 )))
             }
-            381usize => {
+            383usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_ever_gt_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_ever_gt_scalar")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tfloat_ever_gt(
                     &arg0, arg1,
                 )))
             }
-            382usize => {
+            384usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_ever_lt")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_ever_lt")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tfloat_ever_lt(
                     &arg0, arg1,
                 )))
             }
-            383usize => {
+            385usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_ever_lt_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_ever_lt_scalar")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tfloat_ever_lt(
                     &arg0, arg1,
                 )))
             }
-            384usize => {
+            386usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_exp")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_exp(&arg0))
             }
-            385usize => {
+            387usize => {
+                let arg0 = dv_text(&args, 0, "tfloat_from_ewkt")?;
+                match tfloat_ops::tfloat_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_tfloat_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            388usize => {
+                let arg0 = dv_text(&args, 0, "tfloat_instant_from_ewkt")?;
+                match tfloat_ops::tfloat_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_tfloat_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            389usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_integral")?;
                 Ok(types::Duckvalue::Float64(statistics_ops::tfloat_integral(
                     &arg0,
                 )))
             }
-            386usize => {
+            390usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_ln")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_ln(&arg0))
             }
-            387usize => {
+            391usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_log10")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_log10(&arg0))
             }
-            388usize => {
+            392usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_max_value")?;
                 Ok(match tfloat_ops::tfloat_max_value(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            389usize => {
+            393usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_max_value_wit")?;
                 Ok(match tfloat_ops::tfloat_max_value(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            390usize => {
+            394usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_min_value")?;
                 Ok(match tfloat_ops::tfloat_min_value(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            391usize => {
+            395usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_min_value_wit")?;
                 Ok(match tfloat_ops::tfloat_min_value(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            392usize => {
+            396usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_minus_period")?;
                 let arg1 = dv_i64(&args, 1, "tfloat_minus_period")?;
                 let arg2 = dv_i64(&args, 2, "tfloat_minus_period")?;
@@ -5000,7 +5244,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            393usize => {
+            397usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_minus_value")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_minus_value")?;
                 match restrictions_ops::tfloat_minus_value(&arg0, arg1) {
@@ -5008,7 +5252,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            394usize => {
+            398usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_mul")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_mul")?;
                 match arithmetic_ops::tfloat_mul(&arg0, &arg1) {
@@ -5016,37 +5260,37 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            395usize => {
+            399usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_mul_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_mul_scalar")?;
                 ret_to_witvalue_tfloat_sequence(arithmetic_ops::tfloat_mul_scalar(&arg0, arg1))
             }
-            396usize => {
+            400usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_negate")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_negate(&arg0))
             }
-            397usize => {
+            401usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     tfloat_ops::tfloat_num_instants(&arg0) as i64,
                 ))
             }
-            398usize => {
+            402usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_num_instants_wit")?;
                 Ok(types::Duckvalue::Int64(
                     tfloat_ops::tfloat_num_instants(&arg0) as i64,
                 ))
             }
-            399usize => {
+            403usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_pct_change")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_ops::tfloat_pct_change(&arg0))
             }
-            400usize => {
+            404usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_pow")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_pow")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_pow(&arg0, arg1))
             }
-            401usize => {
+            405usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_sample_entropy")?;
                 let arg1 = dv_i64(&args, 1, "tfloat_sample_entropy")? as u32;
                 let arg2 = dv_f64(&args, 2, "tfloat_sample_entropy")?;
@@ -5057,15 +5301,15 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            402usize => {
+            406usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_sin")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_sin(&arg0))
             }
-            403usize => {
+            407usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_sqrt")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_sqrt(&arg0))
             }
-            404usize => {
+            408usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_sub")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_sub")?;
                 match arithmetic_ops::tfloat_sub(&arg0, &arg1) {
@@ -5073,16 +5317,16 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            405usize => {
+            409usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_sub_scalar")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_sub_scalar")?;
                 ret_to_witvalue_tfloat_sequence(arithmetic_ops::tfloat_sub_scalar(&arg0, arg1))
             }
-            406usize => {
+            410usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_tan")?;
                 ret_to_witvalue_tfloat_sequence(tfloat_math_ops::tfloat_tan(&arg0))
             }
-            407usize => {
+            411usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_temporal_correlation")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_temporal_correlation")?;
                 let arg2 = dv_i64(&args, 2, "tfloat_temporal_correlation")? as u32;
@@ -5091,7 +5335,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            408usize => {
+            412usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_temporal_covariance")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_temporal_covariance")?;
                 let arg2 = dv_i64(&args, 2, "tfloat_temporal_covariance")? as u32;
@@ -5100,7 +5344,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            409usize => {
+            413usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_temporal_eq")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_temporal_eq")?;
                 match comparisons_ops::tfloat_temporal_eq(&arg0, &arg1) {
@@ -5108,7 +5352,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            410usize => {
+            414usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_temporal_ge")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_temporal_ge")?;
                 match comparisons_ops::tfloat_temporal_ge(&arg0, &arg1) {
@@ -5116,7 +5360,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            411usize => {
+            415usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_temporal_gt")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_temporal_gt")?;
                 match comparisons_ops::tfloat_temporal_gt(&arg0, &arg1) {
@@ -5124,7 +5368,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            412usize => {
+            416usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_temporal_le")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_temporal_le")?;
                 match comparisons_ops::tfloat_temporal_le(&arg0, &arg1) {
@@ -5132,7 +5376,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            413usize => {
+            417usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_temporal_lt")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_temporal_lt")?;
                 match comparisons_ops::tfloat_temporal_lt(&arg0, &arg1) {
@@ -5140,7 +5384,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            414usize => {
+            418usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_temporal_ne")?;
                 let arg1 = arg_witvalue_tfloat_sequence(&args, 1, "tfloat_temporal_ne")?;
                 match comparisons_ops::tfloat_temporal_ne(&arg0, &arg1) {
@@ -5148,65 +5392,65 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            415usize => {
+            419usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_time_span")?;
                 match tfloat_ops::tfloat_time_span(&arg0) {
                     Some(__rec) => ret_to_witvalue_time_period(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            416usize => {
+            420usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_to_json")?;
                 Ok(types::Duckvalue::Text(
                     (serde_ops::tfloat_to_json(&arg0)).into(),
                 ))
             }
-            417usize => {
+            421usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_twavg")?;
                 Ok(match tfloat_math_ops::tfloat_twavg(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            418usize => {
+            422usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_twcount")?;
                 Ok(types::Duckvalue::Float64(tfloat_ops::tfloat_twcount(&arg0)))
             }
-            419usize => {
+            423usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_twmax")?;
                 Ok(match tfloat_math_ops::tfloat_twmax(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            420usize => {
+            424usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_twmin")?;
                 Ok(match tfloat_math_ops::tfloat_twmin(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            421usize => {
+            425usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_twstddev")?;
                 Ok(match tfloat_ops::tfloat_twstddev(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            422usize => {
+            426usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_twsum")?;
                 Ok(types::Duckvalue::Float64(tfloat_math_ops::tfloat_twsum(
                     &arg0,
                 )))
             }
-            423usize => {
+            427usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_twvariance")?;
                 Ok(match tfloat_ops::tfloat_twvariance(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            424usize => {
+            428usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_value_at")?;
                 let arg1 = dv_i64(&args, 1, "tfloat_value_at")?;
                 Ok(match tfloat_ops::tfloat_value_at(&arg0, arg1) {
@@ -5214,7 +5458,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            425usize => {
+            429usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_when_eq")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_when_eq")?;
                 match restrictions_ops::tfloat_when_eq(&arg0, arg1) {
@@ -5222,7 +5466,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            426usize => {
+            430usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_when_ge")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_when_ge")?;
                 match restrictions_ops::tfloat_when_ge(&arg0, arg1) {
@@ -5230,7 +5474,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            427usize => {
+            431usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_when_gt")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_when_gt")?;
                 match restrictions_ops::tfloat_when_gt(&arg0, arg1) {
@@ -5238,7 +5482,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            428usize => {
+            432usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_when_le")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_when_le")?;
                 match restrictions_ops::tfloat_when_le(&arg0, arg1) {
@@ -5246,7 +5490,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            429usize => {
+            433usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_when_lt")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_when_lt")?;
                 match restrictions_ops::tfloat_when_lt(&arg0, arg1) {
@@ -5254,7 +5498,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            430usize => {
+            434usize => {
                 let arg0 = arg_witvalue_tfloat_sequence(&args, 0, "tfloat_when_ne")?;
                 let arg1 = dv_f64(&args, 1, "tfloat_when_ne")?;
                 match restrictions_ops::tfloat_when_ne(&arg0, arg1) {
@@ -5262,7 +5506,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            431usize => {
+            435usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(
                     &args,
                     0,
@@ -5277,7 +5521,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     ),
                 ))
             }
-            432usize => {
+            436usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_at_stbox")?;
                 let arg1 = arg_witvalue_stbox(&args, 1, "tgeogpoint_at_stbox")?;
                 match trajectory_restrictions_ops::tgeogpoint_at_stbox(&arg0, arg1) {
@@ -5285,7 +5529,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            433usize => {
+            437usize => {
                 let arg0 =
                     arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_avg_speed_geodetic")?;
                 Ok(match tgeogpoint_ops::tgeogpoint_avg_speed_geodetic(&arg0) {
@@ -5293,7 +5537,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            434usize => {
+            438usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_azimuth_at")?;
                 let arg1 = dv_i64(&args, 1, "tgeogpoint_azimuth_at")?;
                 Ok(match tgeogpoint_ops::tgeogpoint_azimuth_at(&arg0, arg1) {
@@ -5301,7 +5545,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            435usize => {
+            439usize => {
                 let arg0 =
                     arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_distance_to_point")?;
                 let arg1 = dv_f64(&args, 1, "tgeogpoint_distance_to_point")?;
@@ -5313,7 +5557,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            436usize => {
+            440usize => {
                 let arg0 =
                     arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_distance_to_point_seq")?;
                 let arg1 = dv_f64(&args, 1, "tgeogpoint_distance_to_point_seq")?;
@@ -5323,7 +5567,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            437usize => {
+            441usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(
                     &args,
                     0,
@@ -5336,7 +5580,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tgeogpoint_ops::tgeogpoint_dwithin_point_geodetic(&arg0, arg1, arg2, arg3),
                 ))
             }
-            438usize => {
+            442usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_lat_at")?;
                 let arg1 = dv_i64(&args, 1, "tgeogpoint_lat_at")?;
                 Ok(match tgeogpoint_ops::tgeogpoint_lat_at(&arg0, arg1) {
@@ -5344,14 +5588,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            439usize => {
+            443usize => {
                 let arg0 =
                     arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_length_geodetic")?;
                 Ok(types::Duckvalue::Float64(
                     tgeogpoint_ops::tgeogpoint_length_geodetic(&arg0),
                 ))
             }
-            440usize => {
+            444usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_lon_at")?;
                 let arg1 = dv_i64(&args, 1, "tgeogpoint_lon_at")?;
                 Ok(match tgeogpoint_ops::tgeogpoint_lon_at(&arg0, arg1) {
@@ -5359,7 +5603,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            441usize => {
+            445usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(
                     &args,
                     0,
@@ -5376,7 +5620,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            442usize => {
+            446usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_min_distance")?;
                 let arg1 = arg_witvalue_tgeogpoint_sequence(&args, 1, "tgeogpoint_min_distance")?;
                 Ok(
@@ -5386,7 +5630,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            443usize => {
+            447usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(
                     &args,
                     0,
@@ -5403,7 +5647,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            444usize => {
+            448usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_minus_stbox")?;
                 let arg1 = arg_witvalue_stbox(&args, 1, "tgeogpoint_minus_stbox")?;
                 match trajectory_restrictions_ops::tgeogpoint_minus_stbox(&arg0, arg1) {
@@ -5411,13 +5655,13 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            445usize => {
+            449usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     tgeogpoint_ops::tgeogpoint_num_instants(&arg0) as i64,
                 ))
             }
-            446usize => {
+            450usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_num_stops")?;
                 let arg1 = dv_f64(&args, 1, "tgeogpoint_num_stops")?;
                 let arg2 = dv_i64(&args, 2, "tgeogpoint_num_stops")?;
@@ -5425,14 +5669,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     analytics_ops::tgeogpoint_num_stops(&arg0, arg1, arg2) as i64,
                 ))
             }
-            447usize => {
+            451usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_num_turns")?;
                 let arg1 = dv_f64(&args, 1, "tgeogpoint_num_turns")?;
                 Ok(types::Duckvalue::Int64(
                     analytics_ops::tgeogpoint_num_turns(&arg0, arg1) as i64,
                 ))
             }
-            448usize => {
+            452usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_speed_at")?;
                 let arg1 = dv_i64(&args, 1, "tgeogpoint_speed_at")?;
                 Ok(match tgeogpoint_ops::tgeogpoint_speed_at(&arg0, arg1) {
@@ -5440,7 +5684,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            449usize => {
+            453usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(
                     &args,
                     0,
@@ -5453,14 +5697,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tgeogpoint_ops::tgeogpoint_tdisjoint_point_geodetic(&arg0, arg1, arg2, arg3),
                 ))
             }
-            450usize => {
+            454usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(&args, 0, "tgeogpoint_time_span")?;
                 match tgeogpoint_ops::tgeogpoint_time_span(&arg0) {
                     Some(__rec) => ret_to_witvalue_time_period(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            451usize => {
+            455usize => {
                 let arg0 = arg_witvalue_tgeogpoint_sequence(
                     &args,
                     0,
@@ -5473,7 +5717,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tgeogpoint_ops::tgeogpoint_tintersects_point_geodetic(&arg0, arg1, arg2, arg3),
                 ))
             }
-            452usize => {
+            456usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_at_point")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint3d_at_point")?;
                 let arg2 = dv_f64(&args, 2, "tgeompoint3d_at_point")?;
@@ -5486,21 +5730,21 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            453usize => {
+            457usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_avg_speed")?;
                 Ok(match tgeompoint3d_ops::tgeompoint3d_avg_speed(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            454usize => {
+            458usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_azimuth")?;
                 match tgeompoint3d_ops::tgeompoint3d_azimuth(&arg0) {
                     Some(__rec) => ret_to_witvalue_tfloat_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            455usize => {
+            459usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_cumulative_length")?;
                 match tgeompoint3d_ops::tgeompoint3d_cumulative_length(&arg0) {
@@ -5508,7 +5752,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            456usize => {
+            460usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_distance_to_point")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint3d_distance_to_point")?;
@@ -5524,7 +5768,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            457usize => {
+            461usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_dtw_distance")?;
                 let arg1 =
@@ -5533,7 +5777,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tgeompoint3d_ops::tgeompoint3d_dtw_distance(&arg0, &arg1),
                 ))
             }
-            458usize => {
+            462usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_frechet_distance")?;
                 let arg1 =
@@ -5542,21 +5786,21 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tgeompoint3d_ops::tgeompoint3d_frechet_distance(&arg0, &arg1),
                 ))
             }
-            459usize => {
+            463usize => {
                 let arg0 = dv_text(&args, 0, "tgeompoint3d_from_csv")?;
                 match tgeompoint3d_ops::tgeompoint3d_from_csv(arg0) {
                     Some(__rec) => ret_to_witvalue_tgeompoint3d_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            460usize => {
+            464usize => {
                 let arg0 = dv_text(&args, 0, "tgeompoint3d_from_ewkt")?;
                 match tgeompoint3d_ops::tgeompoint3d_from_ewkt(arg0) {
                     Some(__rec) => ret_to_witvalue_tgeompoint3d_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            461usize => {
+            465usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(
                     &args,
                     0,
@@ -5571,13 +5815,13 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tgeompoint3d_ops::tgeompoint3d_hausdorff_distance(&arg0, &arg1),
                 ))
             }
-            462usize => {
+            466usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_length")?;
                 Ok(types::Duckvalue::Float64(
                     tgeompoint3d_ops::tgeompoint3d_length(&arg0),
                 ))
             }
-            463usize => {
+            467usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_minus_point")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint3d_minus_point")?;
@@ -5591,61 +5835,61 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            464usize => {
+            468usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     tgeompoint3d_ops::tgeompoint3d_num_instants(&arg0) as i64,
                 ))
             }
-            465usize => {
+            469usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_pitch")?;
                 match tgeompoint3d_ops::tgeompoint3d_pitch(&arg0) {
                     Some(__rec) => ret_to_witvalue_tfloat_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            466usize => {
+            470usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_planar_length")?;
                 Ok(types::Duckvalue::Float64(
                     tgeompoint3d_ops::tgeompoint3d_planar_length(&arg0),
                 ))
             }
-            467usize => {
+            471usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_time_span")?;
                 match tgeompoint3d_ops::tgeompoint3d_time_span(&arg0) {
                     Some(__rec) => ret_to_witvalue_time_period(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            468usize => {
+            472usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_to_csv")?;
                 Ok(types::Duckvalue::Text(
                     (tgeompoint3d_ops::tgeompoint3d_to_csv(&arg0)).into(),
                 ))
             }
-            469usize => {
+            473usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_to_ewkt")?;
                 Ok(types::Duckvalue::Text(
                     (tgeompoint3d_ops::tgeompoint3d_to_ewkt(&arg0)).into(),
                 ))
             }
-            470usize => {
+            474usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_total_climb")?;
                 Ok(types::Duckvalue::Float64(
                     tgeompoint3d_ops::tgeompoint3d_total_climb(&arg0),
                 ))
             }
-            471usize => {
+            475usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_total_descent")?;
                 Ok(types::Duckvalue::Float64(
                     tgeompoint3d_ops::tgeompoint3d_total_descent(&arg0),
                 ))
             }
-            472usize => {
+            476usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_value_at_x")?;
                 let arg1 = dv_i64(&args, 1, "tgeompoint3d_value_at_x")?;
                 Ok(
@@ -5655,7 +5899,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            473usize => {
+            477usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_value_at_y")?;
                 let arg1 = dv_i64(&args, 1, "tgeompoint3d_value_at_y")?;
                 Ok(
@@ -5665,7 +5909,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            474usize => {
+            478usize => {
                 let arg0 = arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_value_at_z")?;
                 let arg1 = dv_i64(&args, 1, "tgeompoint3d_value_at_z")?;
                 Ok(
@@ -5675,7 +5919,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            475usize => {
+            479usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint3d_sequence(&args, 0, "tgeompoint3d_vertical_speed")?;
                 match tgeompoint3d_ops::tgeompoint3d_vertical_speed(&arg0) {
@@ -5683,7 +5927,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            476usize => {
+            480usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_acceleration_count")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_acceleration_count")?;
@@ -5691,7 +5935,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tgeompoint_detection_ops::tgeompoint_acceleration_count(&arg0, arg1) as i64,
                 ))
             }
-            477usize => {
+            481usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(
                     &args,
                     0,
@@ -5703,7 +5947,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                         as i64,
                 ))
             }
-            478usize => {
+            482usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_acceleration_events")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_acceleration_events")?;
@@ -5711,7 +5955,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tgeompoint_detection_ops::tgeompoint_acceleration_events(&arg0, arg1) as i64,
                 ))
             }
-            479usize => {
+            483usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_angular_difference")?;
                 match tgeompoint_ops::tgeompoint_angular_difference(&arg0) {
@@ -5719,7 +5963,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            480usize => {
+            484usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_at_period")?;
                 let arg1 = dv_i64(&args, 1, "tgeompoint_at_period")?;
                 let arg2 = dv_i64(&args, 2, "tgeompoint_at_period")?;
@@ -5728,7 +5972,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            481usize => {
+            485usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_at_point")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_at_point")?;
                 let arg2 = dv_f64(&args, 2, "tgeompoint_at_point")?;
@@ -5738,7 +5982,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            482usize => {
+            486usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_at_stbox")?;
                 let arg1 = arg_witvalue_stbox(&args, 1, "tgeompoint_at_stbox")?;
                 match trajectory_restrictions_ops::tgeompoint_at_stbox(&arg0, arg1) {
@@ -5746,21 +5990,21 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            483usize => {
+            487usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_avg_speed")?;
                 Ok(match tgeompoint_ops::tgeompoint_avg_speed(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            484usize => {
+            488usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_azimuth")?;
                 match tgeompoint_ops::tgeompoint_azimuth(&arg0) {
                     Some(__rec) => ret_to_witvalue_tfloat_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            485usize => {
+            489usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_bearing")?;
                 {
                     let __r = tgeompoint_extended_ops::tgeompoint_bearing(&arg0);
@@ -5770,14 +6014,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            486usize => {
+            490usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_bounding_box")?;
                 match tgeompoint_ops::tgeompoint_bounding_box(&arg0) {
                     Some(__rec) => ret_to_witvalue_bounding_box(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            487usize => {
+            491usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_cluster_count_dbscan")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_cluster_count_dbscan")?;
@@ -5786,7 +6030,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     clustering_ops::tgeompoint_cluster_count_dbscan(&arg0, arg1, arg2) as i64,
                 ))
             }
-            488usize => {
+            492usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_cumulative_length")?;
                 match tgeompoint_ops::tgeompoint_cumulative_length(&arg0) {
@@ -5794,14 +6038,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            489usize => {
+            493usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_detect_loops")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_detect_loops")?;
                 Ok(types::Duckvalue::Int64(
                     tgeompoint_detection_ops::tgeompoint_detect_loops(&arg0, arg1) as i64,
                 ))
             }
-            490usize => {
+            494usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_detect_stops")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_detect_stops")?;
                 let arg2 = dv_i64(&args, 2, "tgeompoint_detect_stops")?;
@@ -5809,20 +6053,20 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tgeompoint_detection_ops::tgeompoint_detect_stops(&arg0, arg1, arg2) as i64,
                 ))
             }
-            491usize => {
+            495usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_detect_turns")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_detect_turns")?;
                 Ok(types::Duckvalue::Int64(
                     tgeompoint_detection_ops::tgeompoint_detect_turns(&arg0, arg1) as i64,
                 ))
             }
-            492usize => {
+            496usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_detect_u_turns")?;
                 Ok(types::Duckvalue::Int64(
                     tgeompoint_detection_ops::tgeompoint_detect_u_turns(&arg0) as i64,
                 ))
             }
-            493usize => {
+            497usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_direction_stats")?;
                 match tgeompoint_ops::tgeompoint_direction_stats(&arg0) {
@@ -5830,7 +6074,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            494usize => {
+            498usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_distance_at")?;
                 let arg1 = arg_witvalue_tgeompoint_sequence(&args, 1, "tgeompoint_distance_at")?;
                 let arg2 = dv_i64(&args, 2, "tgeompoint_distance_at")?;
@@ -5841,7 +6085,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            495usize => {
+            499usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_distance_to_point")?;
                 let arg1 = arg_witvalue_geom_point(&args, 1, "tgeompoint_distance_to_point")?;
@@ -5853,7 +6097,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            496usize => {
+            500usize => {
+                let arg0 = dv_text(&args, 0, "tgeompoint_from_ewkt")?;
+                match tgeompoint_ops::tgeompoint_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_tgeompoint_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            501usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_from_web_mercator")?;
                 match tgeompoint_extended_ops::tgeompoint_from_web_mercator(&arg0) {
@@ -5861,18 +6112,18 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            497usize => {
+            502usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_full_analysis")?;
                 ret_to_witvalue_trajectory_analysis(tgeompoint_ops::tgeompoint_full_analysis(&arg0))
             }
-            498usize => {
+            503usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_geodetic_length")?;
                 Ok(types::Duckvalue::Float64(
                     tgeompoint_extended_ops::tgeompoint_geodetic_length(&arg0),
                 ))
             }
-            499usize => {
+            504usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_geodetic_speed")?;
                 {
                     let __r = tgeompoint_extended_ops::tgeompoint_geodetic_speed(&arg0);
@@ -5882,25 +6133,32 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            500usize => {
+            505usize => {
+                let arg0 = dv_text(&args, 0, "tgeompoint_instant_from_ewkt")?;
+                match tgeompoint_ops::tgeompoint_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_tgeompoint_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            506usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_length")?;
                 Ok(types::Duckvalue::Float64(
                     tgeompoint_ops::tgeompoint_length(&arg0),
                 ))
             }
-            501usize => {
+            507usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_max_speed")?;
                 Ok(types::Duckvalue::Float64(
                     tgeompoint_ops::tgeompoint_max_speed(&arg0),
                 ))
             }
-            502usize => {
+            508usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_min_speed")?;
                 Ok(types::Duckvalue::Float64(
                     tgeompoint_ops::tgeompoint_min_speed(&arg0),
                 ))
             }
-            503usize => {
+            509usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_minus_period")?;
                 let arg1 = dv_i64(&args, 1, "tgeompoint_minus_period")?;
                 let arg2 = dv_i64(&args, 2, "tgeompoint_minus_period")?;
@@ -5909,7 +6167,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            504usize => {
+            510usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_minus_point")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_minus_point")?;
                 let arg2 = dv_f64(&args, 2, "tgeompoint_minus_point")?;
@@ -5919,7 +6177,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            505usize => {
+            511usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_minus_stbox")?;
                 let arg1 = arg_witvalue_stbox(&args, 1, "tgeompoint_minus_stbox")?;
                 match trajectory_restrictions_ops::tgeompoint_minus_stbox(&arg0, arg1) {
@@ -5927,12 +6185,12 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            506usize => {
+            512usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_movement_summary")?;
                 ret_to_witvalue_movement_summary(tgeompoint_ops::tgeompoint_movement_summary(&arg0))
             }
-            507usize => {
+            513usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(
                     &args,
                     0,
@@ -5952,20 +6210,20 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            508usize => {
+            514usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     tgeompoint_ops::tgeompoint_num_instants(&arg0) as i64,
                 ))
             }
-            509usize => {
+            515usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_num_loops")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_num_loops")?;
                 Ok(types::Duckvalue::Int64(
                     analytics_ops::tgeompoint_num_loops(&arg0, arg1) as i64,
                 ))
             }
-            510usize => {
+            516usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_num_stops")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_num_stops")?;
                 let arg2 = dv_i64(&args, 2, "tgeompoint_num_stops")?;
@@ -5973,33 +6231,33 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     analytics_ops::tgeompoint_num_stops(&arg0, arg1, arg2) as i64,
                 ))
             }
-            511usize => {
+            517usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_num_turns")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_num_turns")?;
                 Ok(types::Duckvalue::Int64(
                     analytics_ops::tgeompoint_num_turns(&arg0, arg1) as i64,
                 ))
             }
-            512usize => {
+            518usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_num_u_turns")?;
                 Ok(types::Duckvalue::Int64(
                     analytics_ops::tgeompoint_num_u_turns(&arg0) as i64,
                 ))
             }
-            513usize => {
+            519usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_overlaps_stbox")?;
                 let arg1 = arg_witvalue_stbox(&args, 1, "tgeompoint_overlaps_stbox")?;
                 Ok(types::Duckvalue::Boolean(
                     tgeompoint_extended_ops::tgeompoint_overlaps_stbox(&arg0, arg1),
                 ))
             }
-            514usize => {
+            520usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_quality_score")?;
                 Ok(types::Duckvalue::Float64(
                     analytics_ops::tgeompoint_quality_score(&arg0),
                 ))
             }
-            515usize => {
+            521usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_simplify")?;
                 let arg1 = dv_f64(&args, 1, "tgeompoint_simplify")?;
                 ret_to_witvalue_tgeompoint_sequence(
@@ -6011,40 +6269,40 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     })?,
                 )
             }
-            516usize => {
+            522usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_speed_stats")?;
                 match tgeompoint_ops::tgeompoint_speed_stats(&arg0) {
                     Some(__rec) => ret_to_witvalue_speed_stats(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            517usize => {
+            523usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_speeds")?;
                 match tgeompoint_ops::tgeompoint_speeds(&arg0) {
                     Some(__rec) => ret_to_witvalue_tfloat_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            518usize => {
+            524usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_srid")?;
                 Ok(types::Duckvalue::Int64(
                     tgeompoint_extended_ops::tgeompoint_srid(&arg0) as i64,
                 ))
             }
-            519usize => {
+            525usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_to_geojson")?;
                 Ok(types::Duckvalue::Text(
                     (serde_ops::tgeompoint_to_geojson(&arg0)).into(),
                 ))
             }
-            520usize => {
+            526usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_to_geojson_feature")?;
                 Ok(types::Duckvalue::Text(
                     (serde_ops::tgeompoint_to_geojson_feature(&arg0)).into(),
                 ))
             }
-            521usize => {
+            527usize => {
                 let arg0 =
                     arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_to_web_mercator")?;
                 match tgeompoint_extended_ops::tgeompoint_to_web_mercator(&arg0) {
@@ -6052,13 +6310,13 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            522usize => {
+            528usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_tortuosity")?;
                 Ok(types::Duckvalue::Float64(
                     tgeompoint_ops::tgeompoint_tortuosity(&arg0),
                 ))
             }
-            523usize => {
+            529usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "tgeompoint_value_at")?;
                 let arg1 = dv_i64(&args, 1, "tgeompoint_value_at")?;
                 match tgeompoint_ops::tgeompoint_value_at(&arg0, arg1) {
@@ -6066,11 +6324,11 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            524usize => {
+            530usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_abs")?;
                 ret_to_witvalue_tint_sequence(tint_math_ops::tint_abs(&arg0))
             }
-            525usize => {
+            531usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_add")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_add")?;
                 match arithmetic_ops::tint_add(&arg0, &arg1) {
@@ -6078,68 +6336,68 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            526usize => {
+            532usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_add_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_add_scalar")?;
                 ret_to_witvalue_tint_sequence(arithmetic_ops::tint_add_scalar(&arg0, arg1))
             }
-            527usize => {
+            533usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_always_eq")?;
                 let arg1 = dv_i64(&args, 1, "tint_always_eq")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_always_eq(
                     &arg0, arg1,
                 )))
             }
-            528usize => {
+            534usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_always_eq_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_always_eq_scalar")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_always_eq(
                     &arg0, arg1,
                 )))
             }
-            529usize => {
+            535usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_always_gt")?;
                 let arg1 = dv_i64(&args, 1, "tint_always_gt")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_always_gt(
                     &arg0, arg1,
                 )))
             }
-            530usize => {
+            536usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_always_gt_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_always_gt_scalar")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_always_gt(
                     &arg0, arg1,
                 )))
             }
-            531usize => {
+            537usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_always_lt")?;
                 let arg1 = dv_i64(&args, 1, "tint_always_lt")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_always_lt(
                     &arg0, arg1,
                 )))
             }
-            532usize => {
+            538usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_always_lt_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_always_lt_scalar")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_always_lt(
                     &arg0, arg1,
                 )))
             }
-            533usize => {
+            539usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_at_max")?;
                 match restrictions_ops::tint_at_max(&arg0) {
                     Some(__rec) => ret_to_witvalue_tint_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            534usize => {
+            540usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_at_min")?;
                 match restrictions_ops::tint_at_min(&arg0) {
                     Some(__rec) => ret_to_witvalue_tint_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            535usize => {
+            541usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_at_period")?;
                 let arg1 = dv_i64(&args, 1, "tint_at_period")?;
                 let arg2 = dv_i64(&args, 2, "tint_at_period")?;
@@ -6148,7 +6406,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            536usize => {
+            542usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_at_value")?;
                 let arg1 = dv_i64(&args, 1, "tint_at_value")?;
                 match restrictions_ops::tint_at_value(&arg0, arg1) {
@@ -6156,11 +6414,11 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            537usize => {
+            543usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_diff")?;
                 ret_to_witvalue_tint_sequence(tint_ops::tint_diff(&arg0))
             }
-            538usize => {
+            544usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_div")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_div")?;
                 match arithmetic_ops::tint_div(&arg0, &arg1) {
@@ -6168,7 +6426,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            539usize => {
+            545usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_div_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_div_scalar")?;
                 match arithmetic_ops::tint_div_scalar(&arg0, arg1) {
@@ -6176,88 +6434,102 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            540usize => {
+            546usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_ever_eq")?;
                 let arg1 = dv_i64(&args, 1, "tint_ever_eq")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_ever_eq(
                     &arg0, arg1,
                 )))
             }
-            541usize => {
+            547usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_ever_eq_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_ever_eq_scalar")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_ever_eq(
                     &arg0, arg1,
                 )))
             }
-            542usize => {
+            548usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_ever_gt")?;
                 let arg1 = dv_i64(&args, 1, "tint_ever_gt")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_ever_gt(
                     &arg0, arg1,
                 )))
             }
-            543usize => {
+            549usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_ever_gt_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_ever_gt_scalar")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_ever_gt(
                     &arg0, arg1,
                 )))
             }
-            544usize => {
+            550usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_ever_lt")?;
                 let arg1 = dv_i64(&args, 1, "tint_ever_lt")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_ever_lt(
                     &arg0, arg1,
                 )))
             }
-            545usize => {
+            551usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_ever_lt_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_ever_lt_scalar")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::tint_ever_lt(
                     &arg0, arg1,
                 )))
             }
-            546usize => {
+            552usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_exponential_smooth")?;
                 let arg1 = dv_f64(&args, 1, "tint_exponential_smooth")?;
                 ret_to_witvalue_tfloat_sequence(tint_math_ops::tint_exponential_smooth(&arg0, arg1))
             }
-            547usize => {
+            553usize => {
+                let arg0 = dv_text(&args, 0, "tint_from_ewkt")?;
+                match tint_ops::tint_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_tint_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            554usize => {
+                let arg0 = dv_text(&args, 0, "tint_instant_from_ewkt")?;
+                match tint_ops::tint_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_tint_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            555usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_integral")?;
                 Ok(types::Duckvalue::Int64(
                     tint_math_ops::tint_integral(&arg0) as i64
                 ))
             }
-            548usize => {
+            556usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_max_value_scalar")?;
                 Ok(match tint_ops::tint_max_value(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            549usize => {
+            557usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_max_value_wit")?;
                 Ok(match tint_ops::tint_max_value(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            550usize => {
+            558usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_min_value_scalar")?;
                 Ok(match tint_ops::tint_min_value(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            551usize => {
+            559usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_min_value_wit")?;
                 Ok(match tint_ops::tint_min_value(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            552usize => {
+            560usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_minus_period")?;
                 let arg1 = dv_i64(&args, 1, "tint_minus_period")?;
                 let arg2 = dv_i64(&args, 2, "tint_minus_period")?;
@@ -6266,7 +6538,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            553usize => {
+            561usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_minus_value")?;
                 let arg1 = dv_i64(&args, 1, "tint_minus_value")?;
                 match restrictions_ops::tint_minus_value(&arg0, arg1) {
@@ -6274,7 +6546,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            554usize => {
+            562usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_mod_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_mod_scalar")?;
                 match tint_math_ops::tint_mod_scalar(&arg0, arg1) {
@@ -6282,12 +6554,12 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            555usize => {
+            563usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_moving_average")?;
                 let arg1 = dv_i64(&args, 1, "tint_moving_average")?;
                 ret_to_witvalue_tfloat_sequence(tint_math_ops::tint_moving_average(&arg0, arg1))
             }
-            556usize => {
+            564usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_mul")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_mul")?;
                 match arithmetic_ops::tint_mul(&arg0, &arg1) {
@@ -6295,32 +6567,32 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            557usize => {
+            565usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_mul_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_mul_scalar")?;
                 ret_to_witvalue_tint_sequence(arithmetic_ops::tint_mul_scalar(&arg0, arg1))
             }
-            558usize => {
+            566usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_negate")?;
                 ret_to_witvalue_tint_sequence(tint_math_ops::tint_negate(&arg0))
             }
-            559usize => {
+            567usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     tint_ops::tint_num_instants(&arg0) as i64
                 ))
             }
-            560usize => {
+            568usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_num_instants_wit")?;
                 Ok(types::Duckvalue::Int64(
                     tint_ops::tint_num_instants(&arg0) as i64
                 ))
             }
-            561usize => {
+            569usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_sequence_to_tfloat")?;
                 ret_to_witvalue_tfloat_sequence(tint_math_ops::tint_sequence_to_tfloat(&arg0))
             }
-            562usize => {
+            570usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_sub")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_sub")?;
                 match arithmetic_ops::tint_sub(&arg0, &arg1) {
@@ -6328,12 +6600,12 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            563usize => {
+            571usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_sub_scalar")?;
                 let arg1 = dv_i64(&args, 1, "tint_sub_scalar")?;
                 ret_to_witvalue_tint_sequence(arithmetic_ops::tint_sub_scalar(&arg0, arg1))
             }
-            564usize => {
+            572usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_temporal_eq")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_temporal_eq")?;
                 match comparisons_ops::tint_temporal_eq(&arg0, &arg1) {
@@ -6341,7 +6613,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            565usize => {
+            573usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_temporal_ge")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_temporal_ge")?;
                 match comparisons_ops::tint_temporal_ge(&arg0, &arg1) {
@@ -6349,7 +6621,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            566usize => {
+            574usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_temporal_gt")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_temporal_gt")?;
                 match comparisons_ops::tint_temporal_gt(&arg0, &arg1) {
@@ -6357,7 +6629,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            567usize => {
+            575usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_temporal_le")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_temporal_le")?;
                 match comparisons_ops::tint_temporal_le(&arg0, &arg1) {
@@ -6365,7 +6637,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            568usize => {
+            576usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_temporal_lt")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_temporal_lt")?;
                 match comparisons_ops::tint_temporal_lt(&arg0, &arg1) {
@@ -6373,7 +6645,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            569usize => {
+            577usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_temporal_ne")?;
                 let arg1 = arg_witvalue_tint_sequence(&args, 1, "tint_temporal_ne")?;
                 match comparisons_ops::tint_temporal_ne(&arg0, &arg1) {
@@ -6381,65 +6653,65 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            570usize => {
+            578usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_time_span")?;
                 match tint_ops::tint_time_span(&arg0) {
                     Some(__rec) => ret_to_witvalue_time_period(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            571usize => {
+            579usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_to_json")?;
                 Ok(types::Duckvalue::Text(
                     (serde_ops::tint_to_json(&arg0)).into(),
                 ))
             }
-            572usize => {
+            580usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_twavg")?;
                 Ok(match tint_math_ops::tint_twavg(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            573usize => {
+            581usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_twcount")?;
                 Ok(types::Duckvalue::Float64(tint_ops::tint_twcount(&arg0)))
             }
-            574usize => {
+            582usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_twmax")?;
                 Ok(match tint_math_ops::tint_twmax(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            575usize => {
+            583usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_twmin")?;
                 Ok(match tint_math_ops::tint_twmin(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            576usize => {
+            584usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_twstddev")?;
                 Ok(match tint_ops::tint_twstddev(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            577usize => {
+            585usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_twsum")?;
                 Ok(types::Duckvalue::Int64(
                     tint_math_ops::tint_twsum(&arg0) as i64
                 ))
             }
-            578usize => {
+            586usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_twvariance")?;
                 Ok(match tint_ops::tint_twvariance(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            579usize => {
+            587usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_value_at")?;
                 let arg1 = dv_i64(&args, 1, "tint_value_at")?;
                 Ok(match tint_ops::tint_value_at(&arg0, arg1) {
@@ -6447,7 +6719,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            580usize => {
+            588usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_when_eq")?;
                 let arg1 = dv_i64(&args, 1, "tint_when_eq")?;
                 match restrictions_ops::tint_when_eq(&arg0, arg1) {
@@ -6455,7 +6727,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            581usize => {
+            589usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_when_ge")?;
                 let arg1 = dv_i64(&args, 1, "tint_when_ge")?;
                 match restrictions_ops::tint_when_ge(&arg0, arg1) {
@@ -6463,7 +6735,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            582usize => {
+            590usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_when_gt")?;
                 let arg1 = dv_i64(&args, 1, "tint_when_gt")?;
                 match restrictions_ops::tint_when_gt(&arg0, arg1) {
@@ -6471,7 +6743,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            583usize => {
+            591usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_when_le")?;
                 let arg1 = dv_i64(&args, 1, "tint_when_le")?;
                 match restrictions_ops::tint_when_le(&arg0, arg1) {
@@ -6479,7 +6751,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            584usize => {
+            592usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_when_lt")?;
                 let arg1 = dv_i64(&args, 1, "tint_when_lt")?;
                 match restrictions_ops::tint_when_lt(&arg0, arg1) {
@@ -6487,7 +6759,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            585usize => {
+            593usize => {
                 let arg0 = arg_witvalue_tint_sequence(&args, 0, "tint_when_ne")?;
                 let arg1 = dv_i64(&args, 1, "tint_when_ne")?;
                 match restrictions_ops::tint_when_ne(&arg0, arg1) {
@@ -6495,7 +6767,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            586usize => {
+            594usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_at_period")?;
                 let arg1 = dv_i64(&args, 1, "tnpoint_at_period")?;
                 let arg2 = dv_i64(&args, 2, "tnpoint_at_period")?;
@@ -6504,7 +6776,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            587usize => {
+            595usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_at_position_range")?;
                 let arg1 = dv_f64(&args, 1, "tnpoint_at_position_range")?;
                 let arg2 = dv_f64(&args, 2, "tnpoint_at_position_range")?;
@@ -6513,88 +6785,88 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            588usize => {
+            596usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_avg_network_speed")?;
                 Ok(match tnpoint_ops::tnpoint_avg_network_speed(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            589usize => {
+            597usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_cumulative_length")?;
                 ret_to_witvalue_tfloat_sequence(tnpoint_extended_ops::tnpoint_cumulative_length(
                     &arg0,
                 ))
             }
-            590usize => {
+            598usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_end_position")?;
                 Ok(match tnpoint_ops::tnpoint_end_position(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            591usize => {
+            599usize => {
                 let arg0 = dv_text(&args, 0, "tnpoint_from_ewkt")?;
                 match tnpoint_ops::tnpoint_from_ewkt(arg0) {
                     Some(__rec) => ret_to_witvalue_tnpoint_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            592usize => {
+            600usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_is_backward")?;
                 Ok(types::Duckvalue::Boolean(tnpoint_ops::tnpoint_is_backward(
                     &arg0,
                 )))
             }
-            593usize => {
+            601usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_is_forward")?;
                 Ok(types::Duckvalue::Boolean(tnpoint_ops::tnpoint_is_forward(
                     &arg0,
                 )))
             }
-            594usize => {
+            602usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_is_single_route")?;
                 Ok(types::Duckvalue::Boolean(
                     tnpoint_ops::tnpoint_is_single_route(&arg0),
                 ))
             }
-            595usize => {
+            603usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_max_position")?;
                 Ok(match tnpoint_ops::tnpoint_max_position(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            596usize => {
+            604usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_min_position")?;
                 Ok(match tnpoint_ops::tnpoint_min_position(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            597usize => {
+            605usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_network_length")?;
                 Ok(types::Duckvalue::Float64(
                     tnpoint_ops::tnpoint_network_length(&arg0),
                 ))
             }
-            598usize => {
+            606usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_network_speed")?;
                 ret_to_witvalue_tfloat_sequence(tnpoint_extended_ops::tnpoint_network_speed(&arg0))
             }
-            599usize => {
+            607usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     tnpoint_ops::tnpoint_num_instants(&arg0) as i64,
                 ))
             }
-            600usize => {
+            608usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_num_route_changes")?;
                 Ok(types::Duckvalue::Int64(
                     tnpoint_extended_ops::tnpoint_num_route_changes(&arg0) as i64,
                 ))
             }
-            601usize => {
+            609usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_num_stops")?;
                 let arg1 = dv_f64(&args, 1, "tnpoint_num_stops")?;
                 let arg2 = dv_i64(&args, 2, "tnpoint_num_stops")?;
@@ -6602,7 +6874,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tnpoint_extended_ops::tnpoint_num_stops(&arg0, arg1, arg2) as i64,
                 ))
             }
-            602usize => {
+            610usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_position_at")?;
                 let arg1 = dv_i64(&args, 1, "tnpoint_position_at")?;
                 Ok(match tnpoint_ops::tnpoint_position_at(&arg0, arg1) {
@@ -6610,18 +6882,18 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            603usize => {
+            611usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_positions")?;
                 ret_to_witvalue_tfloat_sequence(tnpoint_extended_ops::tnpoint_positions(&arg0))
             }
-            604usize => {
+            612usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_route_id")?;
                 Ok(match tnpoint_ops::tnpoint_route_id(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            605usize => {
+            613usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_scale_time")?;
                 let arg1 = dv_f64(&args, 1, "tnpoint_scale_time")?;
                 match tnpoint_extended_ops::tnpoint_scale_time(&arg0, arg1) {
@@ -6629,7 +6901,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            606usize => {
+            614usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_shift_time")?;
                 let arg1 = dv_i64(&args, 1, "tnpoint_shift_time")?;
                 match tnpoint_extended_ops::tnpoint_shift_time(&arg0, arg1) {
@@ -6637,7 +6909,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            607usize => {
+            615usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_simplify")?;
                 let arg1 = dv_f64(&args, 1, "tnpoint_simplify")?;
                 match tnpoint_extended_ops::tnpoint_simplify(&arg0, arg1) {
@@ -6645,14 +6917,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            608usize => {
+            616usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_start_position")?;
                 Ok(match tnpoint_ops::tnpoint_start_position(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            609usize => {
+            617usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_stop_duration")?;
                 let arg1 = dv_f64(&args, 1, "tnpoint_stop_duration")?;
                 let arg2 = dv_i64(&args, 2, "tnpoint_stop_duration")?;
@@ -6660,55 +6932,55 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     tnpoint_extended_ops::tnpoint_stop_duration(&arg0, arg1, arg2) as i64,
                 ))
             }
-            610usize => {
+            618usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_time_span")?;
                 match tnpoint_ops::tnpoint_time_span(&arg0) {
                     Some(__rec) => ret_to_witvalue_time_period(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            611usize => {
+            619usize => {
                 let arg0 = arg_witvalue_tnpoint_sequence(&args, 0, "tnpoint_to_ewkt")?;
                 Ok(types::Duckvalue::Text(
                     (tnpoint_ops::tnpoint_to_ewkt(&arg0)).into(),
                 ))
             }
-            612usize => {
+            620usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_angular_acceleration")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_angular_acceleration(
                     &arg0,
                 ))
             }
-            613usize => {
+            621usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_angular_distance_to_pose")?;
                 let arg1 = arg_witvalue_tpose_sequence(&args, 1, "tpose_angular_distance_to_pose")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_angular_distance_to_pose(
                     &arg0, &arg1,
                 ))
             }
-            614usize => {
+            622usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_angular_velocity")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_angular_velocity(&arg0))
             }
-            615usize => {
+            623usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_avg_orientation")?;
                 Ok(match tpose_ops::tpose_avg_orientation(&arg0) {
                     Some(v) => types::Duckvalue::Float64(v as f64),
                     None => types::Duckvalue::Null,
                 })
             }
-            616usize => {
+            624usize => {
                 let arg0 =
                     arg_witvalue_tpose_sequence(&args, 0, "tpose_compute_heading_from_movement")?;
                 ret_to_witvalue_tfloat_sequence(
                     tpose_extended_ops::tpose_compute_heading_from_movement(&arg0),
                 )
             }
-            617usize => {
+            625usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_curvature")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_curvature(&arg0))
             }
-            618usize => {
+            626usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_distance_to_point")?;
                 let arg1 = dv_f64(&args, 1, "tpose_distance_to_point")?;
                 let arg2 = dv_f64(&args, 2, "tpose_distance_to_point")?;
@@ -6716,43 +6988,43 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     &arg0, arg1, arg2,
                 ))
             }
-            619usize => {
+            627usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_distance_to_pose")?;
                 let arg1 = arg_witvalue_tpose_sequence(&args, 1, "tpose_distance_to_pose")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_distance_to_pose(
                     &arg0, &arg1,
                 ))
             }
-            620usize => {
+            628usize => {
                 let arg0 = dv_text(&args, 0, "tpose_from_ewkt")?;
                 match tpose_ops::tpose_from_ewkt(arg0) {
                     Some(__rec) => ret_to_witvalue_tpose_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            621usize => {
+            629usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_get_orientation")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_get_orientation(&arg0))
             }
-            622usize => {
+            630usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_get_x")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_get_x(&arg0))
             }
-            623usize => {
+            631usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_get_y")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_get_y(&arg0))
             }
-            624usize => {
+            632usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_linear_acceleration")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_linear_acceleration(
                     &arg0,
                 ))
             }
-            625usize => {
+            633usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_linear_speed")?;
                 ret_to_witvalue_tfloat_sequence(tpose_extended_ops::tpose_linear_speed(&arg0))
             }
-            626usize => {
+            634usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_nearest_approach")?;
                 let arg1 = arg_witvalue_tpose_sequence(&args, 1, "tpose_nearest_approach")?;
                 Ok(match tpose_ops::tpose_nearest_approach(&arg0, &arg1) {
@@ -6760,7 +7032,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            627usize => {
+            635usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_nearest_approach_point")?;
                 let arg1 = dv_f64(&args, 1, "tpose_nearest_approach_point")?;
                 let arg2 = dv_f64(&args, 2, "tpose_nearest_approach_point")?;
@@ -6771,19 +7043,19 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     },
                 )
             }
-            628usize => {
+            636usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     tpose_ops::tpose_num_instants(&arg0) as i64,
                 ))
             }
-            629usize => {
+            637usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_path_length")?;
                 Ok(types::Duckvalue::Float64(tpose_ops::tpose_path_length(
                     &arg0,
                 )))
             }
-            630usize => {
+            638usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_pose_at_orientation")?;
                 let arg1 = dv_i64(&args, 1, "tpose_pose_at_orientation")?;
                 Ok(match tpose_ops::tpose_pose_at_orientation(&arg0, arg1) {
@@ -6791,7 +7063,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            631usize => {
+            639usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_pose_at_x")?;
                 let arg1 = dv_i64(&args, 1, "tpose_pose_at_x")?;
                 Ok(match tpose_ops::tpose_pose_at_x(&arg0, arg1) {
@@ -6799,7 +7071,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            632usize => {
+            640usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_pose_at_y")?;
                 let arg1 = dv_i64(&args, 1, "tpose_pose_at_y")?;
                 Ok(match tpose_ops::tpose_pose_at_y(&arg0, arg1) {
@@ -6807,33 +7079,33 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            633usize => {
+            641usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_time_span")?;
                 match tpose_ops::tpose_time_span(&arg0) {
                     Some(__rec) => ret_to_witvalue_time_period(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            634usize => {
+            642usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_to_ewkt")?;
                 Ok(types::Duckvalue::Text(
                     (tpose_ops::tpose_to_ewkt(&arg0)).into(),
                 ))
             }
-            635usize => {
+            643usize => {
                 let arg0 = arg_witvalue_tpose_sequence(&args, 0, "tpose_total_rotation")?;
                 Ok(types::Duckvalue::Float64(tpose_ops::tpose_total_rotation(
                     &arg0,
                 )))
             }
-            636usize => {
+            644usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_contains")?;
                 let arg1 = dv_i64(&args, 1, "tstzset_contains")?;
                 Ok(types::Duckvalue::Boolean(tstzset_ops::tstzset_contains(
                     &arg0, arg1,
                 )))
             }
-            637usize => {
+            645usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_intersection")?;
                 let arg1: Vec<i64> = parse_json_list_i64(&args, 1, "tstzset_intersection")?;
                 {
@@ -6844,13 +7116,13 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            638usize => {
+            646usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_len")?;
                 Ok(types::Duckvalue::Int64(
                     tstzset_ops::tstzset_len(&arg0) as i64
                 ))
             }
-            639usize => {
+            647usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_make")?;
                 {
                     let __r = tstzset_ops::tstzset_make(&arg0);
@@ -6860,7 +7132,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            640usize => {
+            648usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_minus")?;
                 let arg1: Vec<i64> = parse_json_list_i64(&args, 1, "tstzset_minus")?;
                 {
@@ -6871,7 +7143,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            641usize => {
+            649usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_nth")?;
                 let arg1 = dv_i64(&args, 1, "tstzset_nth")? as u32;
                 Ok(match tstzset_ops::tstzset_nth(&arg0, arg1) {
@@ -6879,14 +7151,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            642usize => {
+            650usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_overlaps")?;
                 let arg1: Vec<i64> = parse_json_list_i64(&args, 1, "tstzset_overlaps")?;
                 Ok(types::Duckvalue::Boolean(tstzset_ops::tstzset_overlaps(
                     &arg0, &arg1,
                 )))
             }
-            643usize => {
+            651usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_shift")?;
                 let arg1 = dv_i64(&args, 1, "tstzset_shift")?;
                 {
@@ -6897,7 +7169,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            644usize => {
+            652usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_successor")?;
                 {
                     let __r = tstzset_ops::tstzset_successor(&arg0);
@@ -6907,13 +7179,13 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            645usize => {
+            653usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_to_text")?;
                 Ok(types::Duckvalue::Text(
                     (sets_ops::tstz_set_to_text(&arg0)).into(),
                 ))
             }
-            646usize => {
+            654usize => {
                 let arg0: Vec<i64> = parse_json_list_i64(&args, 0, "tstzset_union")?;
                 let arg1: Vec<i64> = parse_json_list_i64(&args, 1, "tstzset_union")?;
                 {
@@ -6924,40 +7196,40 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            647usize => {
+            655usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_adjacent")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "tstzspan_adjacent")?;
                 Ok(types::Duckvalue::Boolean(tstzspan_ops::tstzspan_adjacent(
                     arg0, arg1,
                 )))
             }
-            648usize => {
+            656usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_contains")?;
                 let arg1 = dv_i64(&args, 1, "tstzspan_contains")?;
                 Ok(types::Duckvalue::Boolean(tstzspan_ops::tstzspan_contains(
                     arg0, arg1,
                 )))
             }
-            649usize => {
+            657usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_contains_span")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "tstzspan_contains_span")?;
                 Ok(types::Duckvalue::Boolean(
                     tstzspan_ops::tstzspan_contains_span(arg0, arg1),
                 ))
             }
-            650usize => {
+            658usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_duration")?;
                 Ok(types::Duckvalue::Int64(
                     tstzspan_ops::tstzspan_duration(arg0) as i64,
                 ))
             }
-            651usize => {
+            659usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_end")?;
                 Ok(types::Duckvalue::Int64(
                     tstzspan_ops::tstzspan_end(arg0) as i64
                 ))
             }
-            652usize => {
+            660usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_expand")?;
                 let arg1 = dv_i64(&args, 1, "tstzspan_expand")?;
                 match tstzspan_ops::tstzspan_expand(arg0, arg1) {
@@ -6965,14 +7237,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            653usize => {
+            661usize => {
                 let arg0 = dv_text(&args, 0, "tstzspan_from_text")?;
                 match spans_ops::tstz_span_from_text(arg0) {
                     Some(__rec) => ret_to_witvalue_int_span(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            654usize => {
+            662usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_intersection")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "tstzspan_intersection")?;
                 match tstzspan_ops::tstzspan_intersection(arg0, arg1) {
@@ -6980,7 +7252,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            655usize => {
+            663usize => {
                 let arg0 = dv_i64(&args, 0, "tstzspan_make")?;
                 let arg1 = dv_i64(&args, 1, "tstzspan_make")?;
                 let arg2 = dv_bool(&args, 2, "tstzspan_make")?;
@@ -6990,13 +7262,13 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            656usize => {
+            664usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_midpoint")?;
                 Ok(types::Duckvalue::Int64(
                     tstzspan_ops::tstzspan_midpoint(arg0) as i64,
                 ))
             }
-            657usize => {
+            665usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_minus")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "tstzspan_minus")?;
                 match tstzspan_ops::tstzspan_minus(arg0, arg1) {
@@ -7004,14 +7276,14 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            658usize => {
+            666usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_overlaps")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "tstzspan_overlaps")?;
                 Ok(types::Duckvalue::Boolean(tstzspan_ops::tstzspan_overlaps(
                     arg0, arg1,
                 )))
             }
-            659usize => {
+            667usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_scale")?;
                 let arg1 = dv_f64(&args, 1, "tstzspan_scale")?;
                 let arg2 = dv_i64(&args, 2, "tstzspan_scale")?;
@@ -7020,24 +7292,24 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            660usize => {
+            668usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_shift")?;
                 let arg1 = dv_i64(&args, 1, "tstzspan_shift")?;
                 ret_to_witvalue_tstzspan(tstzspan_ops::tstzspan_shift(arg0, arg1))
             }
-            661usize => {
+            669usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_start")?;
                 Ok(types::Duckvalue::Int64(
                     tstzspan_ops::tstzspan_start(arg0) as i64
                 ))
             }
-            662usize => {
+            670usize => {
                 let arg0 = arg_witvalue_int_span(&args, 0, "tstzspan_to_text")?;
                 Ok(types::Duckvalue::Text(
                     (spans_ops::tstz_span_to_text(arg0)).into(),
                 ))
             }
-            663usize => {
+            671usize => {
                 let arg0 = arg_witvalue_tstzspan(&args, 0, "tstzspan_union")?;
                 let arg1 = arg_witvalue_tstzspan(&args, 1, "tstzspan_union")?;
                 match tstzspan_ops::tstzspan_union(arg0, arg1) {
@@ -7045,7 +7317,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            664usize => {
+            672usize => {
                 let arg0 = dv_text(&args, 0, "tstzspanset_from_text")?;
                 {
                     match spans_ops::tstz_spanset_from_text(arg0) {
@@ -7062,20 +7334,20 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     }
                 }
             }
-            665usize => {
+            673usize => {
                 let arg0 = parse_json_list_record_int_span(&args, 0, "tstzspanset_to_text")?;
                 Ok(types::Duckvalue::Text(
                     (spans_ops::tstz_spanset_to_text(&arg0)).into(),
                 ))
             }
-            666usize => {
+            674usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_always_eq")?;
                 let arg1 = dv_text(&args, 1, "ttext_always_eq")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::ttext_always_eq(
                     &arg0, arg1,
                 )))
             }
-            667usize => {
+            675usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_at_period")?;
                 let arg1 = dv_i64(&args, 1, "ttext_at_period")?;
                 let arg2 = dv_i64(&args, 2, "ttext_at_period")?;
@@ -7084,7 +7356,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            668usize => {
+            676usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_at_value")?;
                 let arg1 = dv_text(&args, 1, "ttext_at_value")?;
                 match restrictions_ops::ttext_at_value(&arg0, arg1) {
@@ -7092,11 +7364,11 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            669usize => {
+            677usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_btrim")?;
                 ret_to_witvalue_ttext_sequence(ttext_strings_ops::ttext_btrim(&arg0))
             }
-            670usize => {
+            678usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_concat")?;
                 let arg1 = arg_witvalue_ttext_sequence(&args, 1, "ttext_concat")?;
                 match ttext_strings_ops::ttext_concat(&arg0, &arg1) {
@@ -7104,73 +7376,87 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            671usize => {
+            679usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_concat_str")?;
                 let arg1 = dv_text(&args, 1, "ttext_concat_str")?;
                 ret_to_witvalue_ttext_sequence(ttext_strings_ops::ttext_concat_str(&arg0, arg1))
             }
-            672usize => {
+            680usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_duration")?;
                 Ok(types::Duckvalue::Int64(
                     ttext_ops::ttext_duration(&arg0) as i64
                 ))
             }
-            673usize => {
+            681usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_end_timestamp")?;
                 Ok(match ttext_ops::ttext_end_timestamp(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            674usize => {
+            682usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_end_value")?;
                 Ok(match ttext_ops::ttext_end_value(&arg0) {
                     Some(v) => types::Duckvalue::Text(v.into()),
                     None => types::Duckvalue::Null,
                 })
             }
-            675usize => {
+            683usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_ever_eq")?;
                 let arg1 = dv_text(&args, 1, "ttext_ever_eq")?;
                 Ok(types::Duckvalue::Boolean(comparisons_ops::ttext_ever_eq(
                     &arg0, arg1,
                 )))
             }
-            676usize => {
+            684usize => {
                 let arg0 = dv_text(&args, 0, "ttext_from_csv")?;
                 match ttext_ops::ttext_from_csv(arg0) {
                     Some(__rec) => ret_to_witvalue_ttext_sequence(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            677usize => {
+            685usize => {
+                let arg0 = dv_text(&args, 0, "ttext_from_ewkt")?;
+                match ttext_ops::ttext_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_ttext_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            686usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_ilike")?;
                 let arg1 = dv_text(&args, 1, "ttext_ilike")?;
                 ret_to_witvalue_tbool_sequence(ttext_strings_ops::ttext_ilike(&arg0, arg1))
             }
-            678usize => {
+            687usize => {
+                let arg0 = dv_text(&args, 0, "ttext_instant_from_ewkt")?;
+                match ttext_ops::ttext_instant_from_ewkt(arg0) {
+                    Some(__rec) => ret_to_witvalue_ttext_instant(__rec),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            688usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_left")?;
                 let arg1 = dv_i64(&args, 1, "ttext_left")? as u32;
                 ret_to_witvalue_ttext_sequence(ttext_strings_ops::ttext_left(&arg0, arg1))
             }
-            679usize => {
+            689usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_length")?;
                 ret_to_witvalue_tint_sequence(ttext_strings_ops::ttext_length(&arg0))
             }
-            680usize => {
+            690usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_like")?;
                 let arg1 = dv_text(&args, 1, "ttext_like")?;
                 ret_to_witvalue_tbool_sequence(ttext_strings_ops::ttext_like(&arg0, arg1))
             }
-            681usize => {
+            691usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_lower")?;
                 ret_to_witvalue_ttext_sequence(ttext_strings_ops::ttext_lower(&arg0))
             }
-            682usize => {
+            692usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_ltrim")?;
                 ret_to_witvalue_ttext_sequence(ttext_strings_ops::ttext_ltrim(&arg0))
             }
-            683usize => {
+            693usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_minus_period")?;
                 let arg1 = dv_i64(&args, 1, "ttext_minus_period")?;
                 let arg2 = dv_i64(&args, 2, "ttext_minus_period")?;
@@ -7179,7 +7465,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            684usize => {
+            694usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_minus_value")?;
                 let arg1 = dv_text(&args, 1, "ttext_minus_value")?;
                 match restrictions_ops::ttext_minus_value(&arg0, arg1) {
@@ -7187,29 +7473,29 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            685usize => {
+            695usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_num_instants")?;
                 Ok(types::Duckvalue::Int64(
                     ttext_ops::ttext_num_instants(&arg0) as i64,
                 ))
             }
-            686usize => {
+            696usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_num_instants_scalar")?;
                 Ok(types::Duckvalue::Int64(
                     ttext_ops::ttext_num_instants(&arg0) as i64,
                 ))
             }
-            687usize => {
+            697usize => {
                 let arg0 = dv_text(&args, 0, "ttext_prepend_str")?;
                 let arg1 = arg_witvalue_ttext_sequence(&args, 1, "ttext_prepend_str")?;
                 ret_to_witvalue_ttext_sequence(ttext_strings_ops::ttext_prepend_str(arg0, &arg1))
             }
-            688usize => {
+            698usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_regex_match")?;
                 let arg1 = dv_text(&args, 1, "ttext_regex_match")?;
                 ret_to_witvalue_tbool_sequence(ttext_strings_ops::ttext_regex_match(&arg0, arg1))
             }
-            689usize => {
+            699usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_regex_replace")?;
                 let arg1 = dv_text(&args, 1, "ttext_regex_replace")?;
                 let arg2 = dv_text(&args, 2, "ttext_regex_replace")?;
@@ -7217,53 +7503,53 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     &arg0, arg1, arg2,
                 ))
             }
-            690usize => {
+            700usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_right")?;
                 let arg1 = dv_i64(&args, 1, "ttext_right")? as u32;
                 ret_to_witvalue_ttext_sequence(ttext_strings_ops::ttext_right(&arg0, arg1))
             }
-            691usize => {
+            701usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_rtrim")?;
                 ret_to_witvalue_ttext_sequence(ttext_strings_ops::ttext_rtrim(&arg0))
             }
-            692usize => {
+            702usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_start_timestamp")?;
                 Ok(match ttext_ops::ttext_start_timestamp(&arg0) {
                     Some(v) => types::Duckvalue::Int64(v as i64),
                     None => types::Duckvalue::Null,
                 })
             }
-            693usize => {
+            703usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_start_value")?;
                 Ok(match ttext_ops::ttext_start_value(&arg0) {
                     Some(v) => types::Duckvalue::Text(v.into()),
                     None => types::Duckvalue::Null,
                 })
             }
-            694usize => {
+            704usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_time_span")?;
                 match ttext_ops::ttext_time_span(&arg0) {
                     Some(__rec) => ret_to_witvalue_time_period(__rec),
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            695usize => {
+            705usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_to_csv")?;
                 Ok(types::Duckvalue::Text(
                     (ttext_ops::ttext_to_csv(&arg0)).into(),
                 ))
             }
-            696usize => {
+            706usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_to_json")?;
                 Ok(types::Duckvalue::Text(
                     (ttext_ops::ttext_to_json(&arg0)).into(),
                 ))
             }
-            697usize => {
+            707usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_upper")?;
                 ret_to_witvalue_ttext_sequence(ttext_strings_ops::ttext_upper(&arg0))
             }
-            698usize => {
+            708usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_value_at")?;
                 let arg1 = dv_i64(&args, 1, "ttext_value_at")?;
                 Ok(match ttext_ops::ttext_value_at(&arg0, arg1) {
@@ -7271,7 +7557,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => types::Duckvalue::Null,
                 })
             }
-            699usize => {
+            709usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_when_eq")?;
                 let arg1 = dv_text(&args, 1, "ttext_when_eq")?;
                 match restrictions_ops::ttext_when_eq(&arg0, arg1) {
@@ -7279,7 +7565,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            700usize => {
+            710usize => {
                 let arg0 = arg_witvalue_ttext_sequence(&args, 0, "ttext_when_ne")?;
                 let arg1 = dv_text(&args, 1, "ttext_when_ne")?;
                 match restrictions_ops::ttext_when_ne(&arg0, arg1) {
@@ -7287,7 +7573,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            701usize => {
+            711usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "twed_distance")?;
                 let arg1 = arg_witvalue_tgeompoint_sequence(&args, 1, "twed_distance")?;
                 let arg2 = dv_f64(&args, 2, "twed_distance")?;
@@ -7296,7 +7582,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     similarity_extended_ops::twed_distance(&arg0, &arg1, arg2, arg3),
                 ))
             }
-            702usize => {
+            712usize => {
                 let arg0 = arg_witvalue_tgeompoint_sequence(&args, 0, "twed_distance_normalized")?;
                 let arg1 = arg_witvalue_tgeompoint_sequence(&args, 1, "twed_distance_normalized")?;
                 let arg2 = dv_f64(&args, 2, "twed_distance_normalized")?;
@@ -7305,7 +7591,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     similarity_extended_ops::twed_distance_normalized(&arg0, &arg1, arg2, arg3),
                 ))
             }
-            703usize => {
+            713usize => {
                 let arg0 = dv_text(&args, 0, "stbox3d_from_text")?;
                 match stbox_ops::stbox3d_from_text(arg0) {
                     Some(__rec) => ret_to_witvalue_stbox3d(__rec),
@@ -8171,6 +8457,23 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     if matches!(row[0], types::Duckvalue::Null) {
                         continue;
                     }
+                    upstream_vec.push(arg_witvalue_tfloat_sequence(row, 0, "tfloat_variance_agg")?);
+                }
+                let __r = temporal_aggregate_ops::tfloat_variance_aggregate(&upstream_vec);
+                match __r {
+                    Some(v) => Ok(types::Duckvalue::Float64(v as f64)),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            17usize => {
+                let mut upstream_vec = Vec::with_capacity(rows.len());
+                for row in &rows {
+                    if row.is_empty() {
+                        continue;
+                    }
+                    if matches!(row[0], types::Duckvalue::Null) {
+                        continue;
+                    }
                     upstream_vec.push(arg_witvalue_tgeogpoint_sequence(
                         row,
                         0,
@@ -8183,7 +8486,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            17usize => {
+            18usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8204,7 +8507,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            18usize => {
+            19usize => {
                 let mut extras: Option<Vec<types::Duckvalue>> = None;
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
@@ -8231,7 +8534,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     analytics_ops::tgeompoint_num_convoys(&upstream_vec, extra0, extra1, extra2);
                 Ok(types::Duckvalue::Int64(__r as i64))
             }
-            19usize => {
+            20usize => {
                 let mut extras: Option<Vec<types::Duckvalue>> = None;
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
@@ -8256,7 +8559,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                 let __r = analytics_ops::tgeompoint_num_flocks(&upstream_vec, extra0, extra1);
                 Ok(types::Duckvalue::Int64(__r as i64))
             }
-            20usize => {
+            21usize => {
                 let mut extras: Option<Vec<types::Duckvalue>> = None;
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
@@ -8281,7 +8584,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                 let __r = analytics_ops::tgeompoint_num_meetings(&upstream_vec, extra0, extra1);
                 Ok(types::Duckvalue::Int64(__r as i64))
             }
-            21usize => {
+            22usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8302,7 +8605,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            22usize => {
+            23usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8323,7 +8626,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            23usize => {
+            24usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8344,7 +8647,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            24usize => {
+            25usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8358,7 +8661,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                 let __r = temporal_aggregate_ops::tint_count_aggregate(&upstream_vec);
                 Ok(types::Duckvalue::Int64(__r as i64))
             }
-            25usize => {
+            26usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8375,7 +8678,24 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            26usize => {
+            27usize => {
+                let mut upstream_vec = Vec::with_capacity(rows.len());
+                for row in &rows {
+                    if row.is_empty() {
+                        continue;
+                    }
+                    if matches!(row[0], types::Duckvalue::Null) {
+                        continue;
+                    }
+                    upstream_vec.push(arg_witvalue_tint_sequence(row, 0, "tint_max_value_agg")?);
+                }
+                let __r = temporal_aggregate_ops::tint_max_value_aggregate(&upstream_vec);
+                match __r {
+                    Some(v) => Ok(types::Duckvalue::Int64(v as i64)),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            28usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8392,7 +8712,24 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            27usize => {
+            29usize => {
+                let mut upstream_vec = Vec::with_capacity(rows.len());
+                for row in &rows {
+                    if row.is_empty() {
+                        continue;
+                    }
+                    if matches!(row[0], types::Duckvalue::Null) {
+                        continue;
+                    }
+                    upstream_vec.push(arg_witvalue_tint_sequence(row, 0, "tint_min_value_agg")?);
+                }
+                let __r = temporal_aggregate_ops::tint_min_value_aggregate(&upstream_vec);
+                match __r {
+                    Some(v) => Ok(types::Duckvalue::Int64(v as i64)),
+                    None => Ok(types::Duckvalue::Null),
+                }
+            }
+            30usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8409,7 +8746,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            28usize => {
+            31usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8426,7 +8763,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            29usize => {
+            32usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8443,7 +8780,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            30usize => {
+            33usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8460,7 +8797,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            31usize => {
+            34usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8481,7 +8818,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            32usize => {
+            35usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -8498,7 +8835,7 @@ impl callback_dispatch::Guest for MobilitydbBridge {
                     None => Ok(types::Duckvalue::Null),
                 }
             }
-            33usize => {
+            36usize => {
                 let mut upstream_vec = Vec::with_capacity(rows.len());
                 for row in &rows {
                     if row.is_empty() {
@@ -17075,6 +17412,54 @@ fn register_scalars() -> Result<(), types::Duckerror> {
             .expect("scalar handle mutex poisoned")
             .insert(handle, 300usize);
         let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("tbool_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["tbool_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "tbool_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("tbool-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 301usize);
+        let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("tbool_instant_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["tbool_instant_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "tbool_instant_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("tbool-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 302usize);
+        let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
                 name: Some("arg0".into()),
@@ -17107,7 +17492,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 301usize);
+            .insert(handle, 303usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -17137,7 +17522,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 302usize);
+            .insert(handle, 304usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17161,7 +17546,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 303usize);
+            .insert(handle, 305usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17185,7 +17570,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 304usize);
+            .insert(handle, 306usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -17215,7 +17600,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 305usize);
+            .insert(handle, 307usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17239,7 +17624,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 306usize);
+            .insert(handle, 308usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17263,7 +17648,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 307usize);
+            .insert(handle, 309usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17287,7 +17672,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 308usize);
+            .insert(handle, 310usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17311,7 +17696,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 309usize);
+            .insert(handle, 311usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17335,7 +17720,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 310usize);
+            .insert(handle, 312usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -17365,7 +17750,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 311usize);
+            .insert(handle, 313usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17389,7 +17774,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 312usize);
+            .insert(handle, 314usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17413,7 +17798,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 313usize);
+            .insert(handle, 315usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -17447,7 +17832,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 314usize);
+            .insert(handle, 316usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -17477,7 +17862,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 315usize);
+            .insert(handle, 317usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17501,7 +17886,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 316usize);
+            .insert(handle, 318usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17525,7 +17910,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 317usize);
+            .insert(handle, 319usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17549,7 +17934,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 318usize);
+            .insert(handle, 320usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -17587,7 +17972,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 319usize);
+            .insert(handle, 321usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -17621,7 +18006,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 320usize);
+            .insert(handle, 322usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17645,7 +18030,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 321usize);
+            .insert(handle, 323usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17669,7 +18054,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 322usize);
+            .insert(handle, 324usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17693,7 +18078,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 323usize);
+            .insert(handle, 325usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17717,7 +18102,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 324usize);
+            .insert(handle, 326usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17741,7 +18126,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 325usize);
+            .insert(handle, 327usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17765,7 +18150,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 326usize);
+            .insert(handle, 328usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17789,7 +18174,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 327usize);
+            .insert(handle, 329usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17813,7 +18198,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 328usize);
+            .insert(handle, 330usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -17843,7 +18228,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 329usize);
+            .insert(handle, 331usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17867,7 +18252,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 330usize);
+            .insert(handle, 332usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17891,7 +18276,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 331usize);
+            .insert(handle, 333usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17915,7 +18300,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 332usize);
+            .insert(handle, 334usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17939,7 +18324,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 333usize);
+            .insert(handle, 335usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -17963,7 +18348,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 334usize);
+            .insert(handle, 336usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -17993,7 +18378,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 335usize);
+            .insert(handle, 337usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18023,7 +18408,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 336usize);
+            .insert(handle, 338usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18053,7 +18438,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 337usize);
+            .insert(handle, 339usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18083,7 +18468,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 338usize);
+            .insert(handle, 340usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18113,7 +18498,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 339usize);
+            .insert(handle, 341usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18143,7 +18528,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 340usize);
+            .insert(handle, 342usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18173,7 +18558,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 341usize);
+            .insert(handle, 343usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18203,7 +18588,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 342usize);
+            .insert(handle, 344usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18233,7 +18618,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 343usize);
+            .insert(handle, 345usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18263,7 +18648,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 344usize);
+            .insert(handle, 346usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18293,7 +18678,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 345usize);
+            .insert(handle, 347usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18317,7 +18702,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 346usize);
+            .insert(handle, 348usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18347,7 +18732,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 347usize);
+            .insert(handle, 349usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18377,7 +18762,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 348usize);
+            .insert(handle, 350usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18407,7 +18792,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 349usize);
+            .insert(handle, 351usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18437,7 +18822,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 350usize);
+            .insert(handle, 352usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18461,7 +18846,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 351usize);
+            .insert(handle, 353usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18485,7 +18870,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 352usize);
+            .insert(handle, 354usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18509,7 +18894,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 353usize);
+            .insert(handle, 355usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18533,7 +18918,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 354usize);
+            .insert(handle, 356usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18563,7 +18948,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 355usize);
+            .insert(handle, 357usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18593,7 +18978,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 356usize);
+            .insert(handle, 358usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18617,7 +19002,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 357usize);
+            .insert(handle, 359usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18647,7 +19032,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 358usize);
+            .insert(handle, 360usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18671,7 +19056,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 359usize);
+            .insert(handle, 361usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18695,7 +19080,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 360usize);
+            .insert(handle, 362usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18725,7 +19110,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 361usize);
+            .insert(handle, 363usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18755,7 +19140,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 362usize);
+            .insert(handle, 364usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18785,7 +19170,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 363usize);
+            .insert(handle, 365usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18815,7 +19200,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 364usize);
+            .insert(handle, 366usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18845,7 +19230,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 365usize);
+            .insert(handle, 367usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18875,7 +19260,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 366usize);
+            .insert(handle, 368usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18905,7 +19290,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 367usize);
+            .insert(handle, 369usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -18935,7 +19320,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 368usize);
+            .insert(handle, 370usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18959,7 +19344,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 369usize);
+            .insert(handle, 371usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -18983,7 +19368,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 370usize);
+            .insert(handle, 372usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19017,7 +19402,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 371usize);
+            .insert(handle, 373usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19047,7 +19432,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 372usize);
+            .insert(handle, 374usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19071,7 +19456,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 373usize);
+            .insert(handle, 375usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19095,7 +19480,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 374usize);
+            .insert(handle, 376usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19119,7 +19504,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 375usize);
+            .insert(handle, 377usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19149,7 +19534,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 376usize);
+            .insert(handle, 378usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19179,7 +19564,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 377usize);
+            .insert(handle, 379usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19209,7 +19594,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 378usize);
+            .insert(handle, 380usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19239,7 +19624,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 379usize);
+            .insert(handle, 381usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19269,7 +19654,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 380usize);
+            .insert(handle, 382usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19299,7 +19684,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 381usize);
+            .insert(handle, 383usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19329,7 +19714,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 382usize);
+            .insert(handle, 384usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19359,7 +19744,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 383usize);
+            .insert(handle, 385usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19389,7 +19774,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 384usize);
+            .insert(handle, 386usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19413,7 +19798,55 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 385usize);
+            .insert(handle, 387usize);
+        let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("tfloat_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["tfloat_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "tfloat_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("tfloat-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 388usize);
+        let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("tfloat_instant_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["tfloat_instant_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "tfloat_instant_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("tfloat-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 389usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19437,7 +19870,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 386usize);
+            .insert(handle, 390usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19461,7 +19894,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 387usize);
+            .insert(handle, 391usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19485,7 +19918,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 388usize);
+            .insert(handle, 392usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19509,7 +19942,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 389usize);
+            .insert(handle, 393usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19533,7 +19966,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 390usize);
+            .insert(handle, 394usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19557,7 +19990,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 391usize);
+            .insert(handle, 395usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19581,7 +20014,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 392usize);
+            .insert(handle, 396usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19615,7 +20048,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 393usize);
+            .insert(handle, 397usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19645,7 +20078,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 394usize);
+            .insert(handle, 398usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19675,7 +20108,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 395usize);
+            .insert(handle, 399usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19705,7 +20138,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 396usize);
+            .insert(handle, 400usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19729,7 +20162,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 397usize);
+            .insert(handle, 401usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19753,7 +20186,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 398usize);
+            .insert(handle, 402usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19777,7 +20210,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 399usize);
+            .insert(handle, 403usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19801,7 +20234,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 400usize);
+            .insert(handle, 404usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19831,7 +20264,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 401usize);
+            .insert(handle, 405usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19865,7 +20298,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 402usize);
+            .insert(handle, 406usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19889,7 +20322,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 403usize);
+            .insert(handle, 407usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19913,7 +20346,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 404usize);
+            .insert(handle, 408usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19943,7 +20376,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 405usize);
+            .insert(handle, 409usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -19973,7 +20406,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 406usize);
+            .insert(handle, 410usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -19997,7 +20430,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 407usize);
+            .insert(handle, 411usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20031,7 +20464,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 408usize);
+            .insert(handle, 412usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20065,7 +20498,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 409usize);
+            .insert(handle, 413usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20095,7 +20528,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 410usize);
+            .insert(handle, 414usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20125,7 +20558,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 411usize);
+            .insert(handle, 415usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20155,7 +20588,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 412usize);
+            .insert(handle, 416usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20185,7 +20618,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 413usize);
+            .insert(handle, 417usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20215,7 +20648,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 414usize);
+            .insert(handle, 418usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20245,7 +20678,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 415usize);
+            .insert(handle, 419usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20269,7 +20702,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 416usize);
+            .insert(handle, 420usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20293,7 +20726,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 417usize);
+            .insert(handle, 421usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20317,7 +20750,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 418usize);
+            .insert(handle, 422usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20341,7 +20774,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 419usize);
+            .insert(handle, 423usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20365,7 +20798,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 420usize);
+            .insert(handle, 424usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20389,7 +20822,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 421usize);
+            .insert(handle, 425usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20413,7 +20846,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 422usize);
+            .insert(handle, 426usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20437,7 +20870,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 423usize);
+            .insert(handle, 427usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20461,7 +20894,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 424usize);
+            .insert(handle, 428usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20491,7 +20924,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 425usize);
+            .insert(handle, 429usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20521,7 +20954,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 426usize);
+            .insert(handle, 430usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20551,7 +20984,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 427usize);
+            .insert(handle, 431usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20581,7 +21014,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 428usize);
+            .insert(handle, 432usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20611,7 +21044,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 429usize);
+            .insert(handle, 433usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20641,7 +21074,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 430usize);
+            .insert(handle, 434usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20671,7 +21104,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 431usize);
+            .insert(handle, 435usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20711,7 +21144,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 432usize);
+            .insert(handle, 436usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20741,7 +21174,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 433usize);
+            .insert(handle, 437usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20765,7 +21198,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 434usize);
+            .insert(handle, 438usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20795,7 +21228,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 435usize);
+            .insert(handle, 439usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20829,7 +21262,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 436usize);
+            .insert(handle, 440usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20863,7 +21296,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 437usize);
+            .insert(handle, 441usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20901,7 +21334,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 438usize);
+            .insert(handle, 442usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20931,7 +21364,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 439usize);
+            .insert(handle, 443usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -20955,7 +21388,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 440usize);
+            .insert(handle, 444usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -20985,7 +21418,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 441usize);
+            .insert(handle, 445usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21021,7 +21454,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 442usize);
+            .insert(handle, 446usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21051,7 +21484,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 443usize);
+            .insert(handle, 447usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21087,7 +21520,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 444usize);
+            .insert(handle, 448usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21117,7 +21550,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 445usize);
+            .insert(handle, 449usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21141,7 +21574,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 446usize);
+            .insert(handle, 450usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21175,7 +21608,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 447usize);
+            .insert(handle, 451usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21205,7 +21638,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 448usize);
+            .insert(handle, 452usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21235,7 +21668,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 449usize);
+            .insert(handle, 453usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21273,7 +21706,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 450usize);
+            .insert(handle, 454usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21297,7 +21730,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 451usize);
+            .insert(handle, 455usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21335,7 +21768,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 452usize);
+            .insert(handle, 456usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21377,7 +21810,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 453usize);
+            .insert(handle, 457usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21401,7 +21834,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 454usize);
+            .insert(handle, 458usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21425,7 +21858,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 455usize);
+            .insert(handle, 459usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21449,7 +21882,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 456usize);
+            .insert(handle, 460usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21491,7 +21924,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 457usize);
+            .insert(handle, 461usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21521,7 +21954,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 458usize);
+            .insert(handle, 462usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21551,7 +21984,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 459usize);
+            .insert(handle, 463usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21575,7 +22008,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 460usize);
+            .insert(handle, 464usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21599,7 +22032,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 461usize);
+            .insert(handle, 465usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21629,7 +22062,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 462usize);
+            .insert(handle, 466usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21653,7 +22086,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 463usize);
+            .insert(handle, 467usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21695,7 +22128,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 464usize);
+            .insert(handle, 468usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21719,7 +22152,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 465usize);
+            .insert(handle, 469usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21743,7 +22176,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 466usize);
+            .insert(handle, 470usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21767,7 +22200,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 467usize);
+            .insert(handle, 471usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21791,7 +22224,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 468usize);
+            .insert(handle, 472usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21815,7 +22248,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 469usize);
+            .insert(handle, 473usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21839,7 +22272,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 470usize);
+            .insert(handle, 474usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21863,7 +22296,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 471usize);
+            .insert(handle, 475usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -21887,7 +22320,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 472usize);
+            .insert(handle, 476usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21917,7 +22350,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 473usize);
+            .insert(handle, 477usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21947,7 +22380,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 474usize);
+            .insert(handle, 478usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -21977,7 +22410,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 475usize);
+            .insert(handle, 479usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22001,7 +22434,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 476usize);
+            .insert(handle, 480usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22031,7 +22464,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 477usize);
+            .insert(handle, 481usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22061,7 +22494,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 478usize);
+            .insert(handle, 482usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22091,7 +22524,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 479usize);
+            .insert(handle, 483usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22115,7 +22548,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 480usize);
+            .insert(handle, 484usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22149,7 +22582,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 481usize);
+            .insert(handle, 485usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22187,7 +22620,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 482usize);
+            .insert(handle, 486usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22217,7 +22650,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 483usize);
+            .insert(handle, 487usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22241,7 +22674,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 484usize);
+            .insert(handle, 488usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22265,7 +22698,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 485usize);
+            .insert(handle, 489usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22289,7 +22722,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 486usize);
+            .insert(handle, 490usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22313,7 +22746,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 487usize);
+            .insert(handle, 491usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22347,7 +22780,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 488usize);
+            .insert(handle, 492usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22371,7 +22804,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 489usize);
+            .insert(handle, 493usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22401,7 +22834,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 490usize);
+            .insert(handle, 494usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22435,7 +22868,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 491usize);
+            .insert(handle, 495usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22465,7 +22898,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 492usize);
+            .insert(handle, 496usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22489,7 +22922,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 493usize);
+            .insert(handle, 497usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22513,7 +22946,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 494usize);
+            .insert(handle, 498usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22547,7 +22980,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 495usize);
+            .insert(handle, 499usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22581,7 +23014,31 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 496usize);
+            .insert(handle, 500usize);
+        let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("tgeompoint_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["tgeompoint_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "tgeompoint_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("tgeompoint-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 501usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22605,7 +23062,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 497usize);
+            .insert(handle, 502usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22629,7 +23086,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 498usize);
+            .insert(handle, 503usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22653,7 +23110,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 499usize);
+            .insert(handle, 504usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22677,7 +23134,31 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 500usize);
+            .insert(handle, 505usize);
+        let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("tgeompoint_instant_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["tgeompoint_instant_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "tgeompoint_instant_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("tgeompoint-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 506usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22701,7 +23182,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 501usize);
+            .insert(handle, 507usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22725,7 +23206,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 502usize);
+            .insert(handle, 508usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22749,7 +23230,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 503usize);
+            .insert(handle, 509usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22783,7 +23264,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 504usize);
+            .insert(handle, 510usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22821,7 +23302,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 505usize);
+            .insert(handle, 511usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22851,7 +23332,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 506usize);
+            .insert(handle, 512usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22875,7 +23356,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 507usize);
+            .insert(handle, 513usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22905,7 +23386,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 508usize);
+            .insert(handle, 514usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -22929,7 +23410,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 509usize);
+            .insert(handle, 515usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22959,7 +23440,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 510usize);
+            .insert(handle, 516usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -22993,7 +23474,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 511usize);
+            .insert(handle, 517usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23023,7 +23504,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 512usize);
+            .insert(handle, 518usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23047,7 +23528,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 513usize);
+            .insert(handle, 519usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23077,7 +23558,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 514usize);
+            .insert(handle, 520usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23101,7 +23582,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 515usize);
+            .insert(handle, 521usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23131,7 +23612,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 516usize);
+            .insert(handle, 522usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23155,7 +23636,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 517usize);
+            .insert(handle, 523usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23179,7 +23660,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 518usize);
+            .insert(handle, 524usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23203,7 +23684,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 519usize);
+            .insert(handle, 525usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23227,7 +23708,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 520usize);
+            .insert(handle, 526usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23251,7 +23732,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 521usize);
+            .insert(handle, 527usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23275,7 +23756,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 522usize);
+            .insert(handle, 528usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23299,7 +23780,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 523usize);
+            .insert(handle, 529usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23329,7 +23810,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 524usize);
+            .insert(handle, 530usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23353,7 +23834,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 525usize);
+            .insert(handle, 531usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23383,7 +23864,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 526usize);
+            .insert(handle, 532usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23413,7 +23894,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 527usize);
+            .insert(handle, 533usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23443,7 +23924,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 528usize);
+            .insert(handle, 534usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23473,7 +23954,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 529usize);
+            .insert(handle, 535usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23503,7 +23984,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 530usize);
+            .insert(handle, 536usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23533,7 +24014,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 531usize);
+            .insert(handle, 537usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23563,7 +24044,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 532usize);
+            .insert(handle, 538usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23593,7 +24074,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 533usize);
+            .insert(handle, 539usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23617,7 +24098,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 534usize);
+            .insert(handle, 540usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23641,7 +24122,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 535usize);
+            .insert(handle, 541usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23675,7 +24156,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 536usize);
+            .insert(handle, 542usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23705,7 +24186,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 537usize);
+            .insert(handle, 543usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -23729,7 +24210,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 538usize);
+            .insert(handle, 544usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23759,7 +24240,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 539usize);
+            .insert(handle, 545usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23789,7 +24270,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 540usize);
+            .insert(handle, 546usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23819,7 +24300,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 541usize);
+            .insert(handle, 547usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23849,7 +24330,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 542usize);
+            .insert(handle, 548usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23879,7 +24360,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 543usize);
+            .insert(handle, 549usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23909,7 +24390,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 544usize);
+            .insert(handle, 550usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23939,7 +24420,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 545usize);
+            .insert(handle, 551usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23969,7 +24450,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 546usize);
+            .insert(handle, 552usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -23999,7 +24480,55 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 547usize);
+            .insert(handle, 553usize);
+        let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("tint_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["tint_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "tint_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("tint-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 554usize);
+        let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("tint_instant_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["tint_instant_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "tint_instant_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("tint-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 555usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24023,7 +24552,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 548usize);
+            .insert(handle, 556usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24047,7 +24576,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 549usize);
+            .insert(handle, 557usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24071,7 +24600,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 550usize);
+            .insert(handle, 558usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24095,7 +24624,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 551usize);
+            .insert(handle, 559usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24119,7 +24648,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 552usize);
+            .insert(handle, 560usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24153,7 +24682,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 553usize);
+            .insert(handle, 561usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24183,7 +24712,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 554usize);
+            .insert(handle, 562usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24213,7 +24742,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 555usize);
+            .insert(handle, 563usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24243,7 +24772,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 556usize);
+            .insert(handle, 564usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24273,7 +24802,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 557usize);
+            .insert(handle, 565usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24303,7 +24832,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 558usize);
+            .insert(handle, 566usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24327,7 +24856,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 559usize);
+            .insert(handle, 567usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24351,7 +24880,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 560usize);
+            .insert(handle, 568usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24375,7 +24904,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 561usize);
+            .insert(handle, 569usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24399,7 +24928,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 562usize);
+            .insert(handle, 570usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24429,7 +24958,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 563usize);
+            .insert(handle, 571usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24459,7 +24988,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 564usize);
+            .insert(handle, 572usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24489,7 +25018,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 565usize);
+            .insert(handle, 573usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24519,7 +25048,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 566usize);
+            .insert(handle, 574usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24549,7 +25078,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 567usize);
+            .insert(handle, 575usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24579,7 +25108,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 568usize);
+            .insert(handle, 576usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24609,7 +25138,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 569usize);
+            .insert(handle, 577usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24639,7 +25168,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 570usize);
+            .insert(handle, 578usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24663,7 +25192,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 571usize);
+            .insert(handle, 579usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24687,7 +25216,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 572usize);
+            .insert(handle, 580usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24711,7 +25240,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 573usize);
+            .insert(handle, 581usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24735,7 +25264,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 574usize);
+            .insert(handle, 582usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24759,7 +25288,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 575usize);
+            .insert(handle, 583usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24783,7 +25312,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 576usize);
+            .insert(handle, 584usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24807,7 +25336,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 577usize);
+            .insert(handle, 585usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24831,7 +25360,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 578usize);
+            .insert(handle, 586usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -24855,7 +25384,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 579usize);
+            .insert(handle, 587usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24885,7 +25414,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 580usize);
+            .insert(handle, 588usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24915,7 +25444,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 581usize);
+            .insert(handle, 589usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24945,7 +25474,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 582usize);
+            .insert(handle, 590usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -24975,7 +25504,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 583usize);
+            .insert(handle, 591usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25005,7 +25534,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 584usize);
+            .insert(handle, 592usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25035,7 +25564,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 585usize);
+            .insert(handle, 593usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25065,7 +25594,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 586usize);
+            .insert(handle, 594usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25099,7 +25628,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 587usize);
+            .insert(handle, 595usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25133,7 +25662,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 588usize);
+            .insert(handle, 596usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25157,7 +25686,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 589usize);
+            .insert(handle, 597usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25181,7 +25710,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 590usize);
+            .insert(handle, 598usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25205,7 +25734,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 591usize);
+            .insert(handle, 599usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25229,7 +25758,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 592usize);
+            .insert(handle, 600usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25253,7 +25782,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 593usize);
+            .insert(handle, 601usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25277,7 +25806,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 594usize);
+            .insert(handle, 602usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25301,7 +25830,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 595usize);
+            .insert(handle, 603usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25325,7 +25854,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 596usize);
+            .insert(handle, 604usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25349,7 +25878,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 597usize);
+            .insert(handle, 605usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25373,7 +25902,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 598usize);
+            .insert(handle, 606usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25397,7 +25926,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 599usize);
+            .insert(handle, 607usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25421,7 +25950,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 600usize);
+            .insert(handle, 608usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25445,7 +25974,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 601usize);
+            .insert(handle, 609usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25479,7 +26008,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 602usize);
+            .insert(handle, 610usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25509,7 +26038,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 603usize);
+            .insert(handle, 611usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25533,7 +26062,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 604usize);
+            .insert(handle, 612usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25557,7 +26086,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 605usize);
+            .insert(handle, 613usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25587,7 +26116,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 606usize);
+            .insert(handle, 614usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25617,7 +26146,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 607usize);
+            .insert(handle, 615usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25647,7 +26176,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 608usize);
+            .insert(handle, 616usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25671,7 +26200,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 609usize);
+            .insert(handle, 617usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25705,7 +26234,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 610usize);
+            .insert(handle, 618usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25729,7 +26258,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 611usize);
+            .insert(handle, 619usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25753,7 +26282,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 612usize);
+            .insert(handle, 620usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25777,7 +26306,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 613usize);
+            .insert(handle, 621usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25807,7 +26336,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 614usize);
+            .insert(handle, 622usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25831,7 +26360,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 615usize);
+            .insert(handle, 623usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25855,7 +26384,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 616usize);
+            .insert(handle, 624usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25879,7 +26408,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 617usize);
+            .insert(handle, 625usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25903,7 +26432,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 618usize);
+            .insert(handle, 626usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25937,7 +26466,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 619usize);
+            .insert(handle, 627usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -25967,7 +26496,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 620usize);
+            .insert(handle, 628usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -25991,7 +26520,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 621usize);
+            .insert(handle, 629usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26015,7 +26544,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 622usize);
+            .insert(handle, 630usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26039,7 +26568,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 623usize);
+            .insert(handle, 631usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26063,7 +26592,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 624usize);
+            .insert(handle, 632usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26087,7 +26616,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 625usize);
+            .insert(handle, 633usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26111,7 +26640,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 626usize);
+            .insert(handle, 634usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26141,7 +26670,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 627usize);
+            .insert(handle, 635usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26175,7 +26704,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 628usize);
+            .insert(handle, 636usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26199,7 +26728,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 629usize);
+            .insert(handle, 637usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26223,7 +26752,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 630usize);
+            .insert(handle, 638usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26253,7 +26782,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 631usize);
+            .insert(handle, 639usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26283,7 +26812,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 632usize);
+            .insert(handle, 640usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26313,7 +26842,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 633usize);
+            .insert(handle, 641usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26337,7 +26866,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 634usize);
+            .insert(handle, 642usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26361,7 +26890,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 635usize);
+            .insert(handle, 643usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26385,7 +26914,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 636usize);
+            .insert(handle, 644usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26415,7 +26944,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 637usize);
+            .insert(handle, 645usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26445,7 +26974,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 638usize);
+            .insert(handle, 646usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26469,7 +26998,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 639usize);
+            .insert(handle, 647usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26493,7 +27022,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 640usize);
+            .insert(handle, 648usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26523,7 +27052,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 641usize);
+            .insert(handle, 649usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26553,7 +27082,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 642usize);
+            .insert(handle, 650usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26583,7 +27112,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 643usize);
+            .insert(handle, 651usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26613,7 +27142,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 644usize);
+            .insert(handle, 652usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26637,7 +27166,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 645usize);
+            .insert(handle, 653usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26661,7 +27190,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 646usize);
+            .insert(handle, 654usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26691,7 +27220,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 647usize);
+            .insert(handle, 655usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26721,7 +27250,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 648usize);
+            .insert(handle, 656usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26751,7 +27280,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 649usize);
+            .insert(handle, 657usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26781,7 +27310,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 650usize);
+            .insert(handle, 658usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26805,7 +27334,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 651usize);
+            .insert(handle, 659usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26829,7 +27358,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 652usize);
+            .insert(handle, 660usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26859,7 +27388,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 653usize);
+            .insert(handle, 661usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26883,7 +27412,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 654usize);
+            .insert(handle, 662usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26913,7 +27442,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 655usize);
+            .insert(handle, 663usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -26951,7 +27480,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 656usize);
+            .insert(handle, 664usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -26975,7 +27504,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 657usize);
+            .insert(handle, 665usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27005,7 +27534,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 658usize);
+            .insert(handle, 666usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27035,7 +27564,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 659usize);
+            .insert(handle, 667usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27069,7 +27598,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 660usize);
+            .insert(handle, 668usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27099,7 +27628,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 661usize);
+            .insert(handle, 669usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27123,7 +27652,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 662usize);
+            .insert(handle, 670usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27147,7 +27676,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 663usize);
+            .insert(handle, 671usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27177,7 +27706,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 664usize);
+            .insert(handle, 672usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27201,7 +27730,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 665usize);
+            .insert(handle, 673usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27225,7 +27754,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 666usize);
+            .insert(handle, 674usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27255,7 +27784,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 667usize);
+            .insert(handle, 675usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27289,7 +27818,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 668usize);
+            .insert(handle, 676usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27319,7 +27848,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 669usize);
+            .insert(handle, 677usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27343,7 +27872,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 670usize);
+            .insert(handle, 678usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27373,7 +27902,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 671usize);
+            .insert(handle, 679usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27403,7 +27932,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 672usize);
+            .insert(handle, 680usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27427,7 +27956,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 673usize);
+            .insert(handle, 681usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27451,7 +27980,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 674usize);
+            .insert(handle, 682usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27475,7 +28004,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 675usize);
+            .insert(handle, 683usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27505,7 +28034,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 676usize);
+            .insert(handle, 684usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27529,7 +28058,31 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 677usize);
+            .insert(handle, 685usize);
+        let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("ttext_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["ttext_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "ttext_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("ttext-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 686usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27559,7 +28112,31 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 678usize);
+            .insert(handle, 687usize);
+        let callback = runtime::ScalarCallback::new(handle);
+        let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
+            name: Some("arg0".into()),
+            logical: types::Logicaltype::Text,
+        }];
+        let opts = runtime::Funcopts {
+            description: Some("ttext_instant_from_ewkt (sqlink-shim-codegen)".into()),
+            tags: vec!["ttext_instant_from_ewkt".into()],
+            attributes: types::Funcflags::DETERMINISTIC | types::Funcflags::STATELESS,
+        };
+        registry.register(
+            "ttext_instant_from_ewkt",
+            &args,
+            &types::Logicaltype::Complex("ttext-instant".into()),
+            callback,
+            Some(&opts),
+        )?;
+    }
+    {
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 688usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27589,7 +28166,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 679usize);
+            .insert(handle, 689usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27613,7 +28190,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 680usize);
+            .insert(handle, 690usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27643,7 +28220,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 681usize);
+            .insert(handle, 691usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27667,7 +28244,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 682usize);
+            .insert(handle, 692usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27691,7 +28268,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 683usize);
+            .insert(handle, 693usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27725,7 +28302,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 684usize);
+            .insert(handle, 694usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27755,7 +28332,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 685usize);
+            .insert(handle, 695usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27779,7 +28356,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 686usize);
+            .insert(handle, 696usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27803,7 +28380,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 687usize);
+            .insert(handle, 697usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27833,7 +28410,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 688usize);
+            .insert(handle, 698usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27863,7 +28440,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 689usize);
+            .insert(handle, 699usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27897,7 +28474,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 690usize);
+            .insert(handle, 700usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -27927,7 +28504,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 691usize);
+            .insert(handle, 701usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27951,7 +28528,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 692usize);
+            .insert(handle, 702usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27975,7 +28552,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 693usize);
+            .insert(handle, 703usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -27999,7 +28576,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 694usize);
+            .insert(handle, 704usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -28023,7 +28600,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 695usize);
+            .insert(handle, 705usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -28047,7 +28624,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 696usize);
+            .insert(handle, 706usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -28071,7 +28648,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 697usize);
+            .insert(handle, 707usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -28095,7 +28672,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 698usize);
+            .insert(handle, 708usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -28125,7 +28702,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 699usize);
+            .insert(handle, 709usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -28155,7 +28732,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 700usize);
+            .insert(handle, 710usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -28185,7 +28762,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 701usize);
+            .insert(handle, 711usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -28223,7 +28800,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 702usize);
+            .insert(handle, 712usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![
             runtime::Funcarg {
@@ -28261,7 +28838,7 @@ fn register_scalars() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 703usize);
+            .insert(handle, 713usize);
         let callback = runtime::ScalarCallback::new(handle);
         let args: Vec<runtime::Funcarg> = vec![runtime::Funcarg {
             name: Some("arg0".into()),
@@ -30263,7 +30840,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 703usize);
+            .insert(handle, 713usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30278,6 +30855,54 @@ fn register_casts() -> Result<(), types::Duckerror> {
         })?;
     }
     {
+        // CAST(<castsourcekind::stringliteral> AS TBOOL) -> tbool_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 300usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TBOOL".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(tbool_from_ewkt: VARCHAR -> TBOOL): {}",
+                e
+            ))
+        })?;
+    }
+    {
+        // CAST(<castsourcekind::stringliteral> AS TBOOL_SEQUENCE) -> tbool_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 300usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TBOOL_SEQUENCE".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(tbool_from_ewkt: VARCHAR -> TBOOL_SEQUENCE): {}",
+                e
+            ))
+        })?;
+    }
+    {
         // CAST(<castsourcekind::stringliteral> AS TBOX) -> tbox_from_text
         let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         // Slot the cast handle into the SCALAR handle table so
@@ -30287,7 +30912,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 311usize);
+            .insert(handle, 313usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30311,7 +30936,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 320usize);
+            .insert(handle, 322usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30335,7 +30960,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 320usize);
+            .insert(handle, 322usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30359,7 +30984,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 345usize);
+            .insert(handle, 347usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30374,6 +30999,78 @@ fn register_casts() -> Result<(), types::Duckerror> {
         })?;
     }
     {
+        // CAST(<castsourcekind::stringliteral> AS TFLOAT) -> tfloat_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 387usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TFLOAT".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(tfloat_from_ewkt: VARCHAR -> TFLOAT): {}",
+                e
+            ))
+        })?;
+    }
+    {
+        // CAST(<castsourcekind::stringliteral> AS TFLOAT_SEQUENCE) -> tfloat_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 387usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TFLOAT_SEQUENCE".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(tfloat_from_ewkt: VARCHAR -> TFLOAT_SEQUENCE): {}",
+                e
+            ))
+        })?;
+    }
+    {
+        // CAST(<castsourcekind::stringliteral> AS TGEOMPOINT) -> tgeompoint_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 500usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TGEOMPOINT".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(tgeompoint_from_ewkt: VARCHAR -> TGEOMPOINT): {}",
+                e
+            ))
+        })?;
+    }
+    {
         // CAST(<castsourcekind::stringliteral> AS TGEOMPOINT3D) -> tgeompoint3d_from_ewkt
         let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         // Slot the cast handle into the SCALAR handle table so
@@ -30383,7 +31080,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 460usize);
+            .insert(handle, 464usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30407,7 +31104,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 460usize);
+            .insert(handle, 464usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30422,6 +31119,78 @@ fn register_casts() -> Result<(), types::Duckerror> {
         })?;
     }
     {
+        // CAST(<castsourcekind::stringliteral> AS TGEOMPOINT_SEQUENCE) -> tgeompoint_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 500usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TGEOMPOINT_SEQUENCE".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(tgeompoint_from_ewkt: VARCHAR -> TGEOMPOINT_SEQUENCE): {}",
+                e
+            ))
+        })?;
+    }
+    {
+        // CAST(<castsourcekind::stringliteral> AS TINT) -> tint_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 553usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TINT".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(tint_from_ewkt: VARCHAR -> TINT): {}",
+                e
+            ))
+        })?;
+    }
+    {
+        // CAST(<castsourcekind::stringliteral> AS TINT_SEQUENCE) -> tint_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 553usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TINT_SEQUENCE".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(tint_from_ewkt: VARCHAR -> TINT_SEQUENCE): {}",
+                e
+            ))
+        })?;
+    }
+    {
         // CAST(<castsourcekind::stringliteral> AS TNPOINT) -> tnpoint_from_ewkt
         let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
         // Slot the cast handle into the SCALAR handle table so
@@ -30431,7 +31200,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 591usize);
+            .insert(handle, 599usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30455,7 +31224,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 591usize);
+            .insert(handle, 599usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30479,7 +31248,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 620usize);
+            .insert(handle, 628usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30503,7 +31272,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 620usize);
+            .insert(handle, 628usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30527,7 +31296,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 653usize);
+            .insert(handle, 661usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30551,7 +31320,7 @@ fn register_casts() -> Result<(), types::Duckerror> {
         handle_table()
             .lock()
             .expect("scalar handle mutex poisoned")
-            .insert(handle, 664usize);
+            .insert(handle, 672usize);
         let callback = runtime::CastCallback::new(handle);
         let spec = catalog::CastSpec {
             from: "VARCHAR".into(),
@@ -30561,6 +31330,54 @@ fn register_casts() -> Result<(), types::Duckerror> {
         catalog::register_cast(&spec, callback).map_err(|e| {
             types::Duckerror::Internal(format!(
                 "register-cast(tstzspanset_from_text: VARCHAR -> TSTZSPANSET): {}",
+                e
+            ))
+        })?;
+    }
+    {
+        // CAST(<castsourcekind::stringliteral> AS TTEXT) -> ttext_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 685usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TTEXT".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(ttext_from_ewkt: VARCHAR -> TTEXT): {}",
+                e
+            ))
+        })?;
+    }
+    {
+        // CAST(<castsourcekind::stringliteral> AS TTEXT_SEQUENCE) -> ttext_from_ewkt
+        let handle = NEXT_HANDLE.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        // Slot the cast handle into the SCALAR handle table so
+        // call_cast can forward into call_scalar at the matching
+        // arm. One arm-index space; the cast contract just
+        // provides an alternate entry point.
+        handle_table()
+            .lock()
+            .expect("scalar handle mutex poisoned")
+            .insert(handle, 685usize);
+        let callback = runtime::CastCallback::new(handle);
+        let spec = catalog::CastSpec {
+            from: "VARCHAR".into(),
+            to: "TTEXT_SEQUENCE".into(),
+            kind: catalog::CastKind::Implicit,
+        };
+        catalog::register_cast(&spec, callback).map_err(|e| {
+            types::Duckerror::Internal(format!(
+                "register-cast(ttext_from_ewkt: VARCHAR -> TTEXT_SEQUENCE): {}",
                 e
             ))
         })?;
