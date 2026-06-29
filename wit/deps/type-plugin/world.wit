@@ -1,0 +1,147 @@
+/// DataFission Custom Type Plugin Interface
+///
+/// Defines the contract for custom data type plugins (e.g., GEOMETRY,
+/// VECTOR, JSONB). All type operations execute within the WASM sandbox.
+
+package datafission:type-plugin@1.0.0;
+
+/// Shared types.
+interface types {
+    /// Logical data types (built-in).
+    enum logical-type {
+        boolean,
+        int8,
+        int16,
+        int32,
+        int64,
+        uint8,
+        uint16,
+        uint32,
+        uint64,
+        float32,
+        float64,
+        utf8,
+        binary,
+        date,
+        time,
+        timestamp,
+    }
+
+    /// Comparison ordering.
+    enum ordering {
+        less,
+        equal,
+        greater,
+    }
+
+    /// Type error.
+    variant type-error {
+        parse-error(string),
+        cast-error(string),
+        invalid-data(string),
+        internal(string),
+    }
+}
+
+/// Custom type plugin interface.
+interface custom-type {
+    use types.{logical-type, ordering, type-error};
+
+    /// SQL type name (e.g., "GEOMETRY", "VECTOR").
+    type-name: func() -> string;
+
+    /// Stable type ID (must be >= 1000).
+    type-id: func() -> u32;
+
+    /// Fixed storage size in bytes, or -1 for variable-length.
+    storage-size: func() -> s32;
+
+    /// Serialize a value to its on-disk representation.
+    serialize: func(value: list<u8>) -> list<u8>;
+
+    /// Deserialize from on-disk bytes.
+    deserialize: func(bytes: list<u8>) -> result<list<u8>, type-error>;
+
+    /// Compare two values for ordering.
+    compare: func(a: list<u8>, b: list<u8>) -> ordering;
+
+    /// Hash a value (for hash joins, GROUP BY).
+    hash-value: func(value: list<u8>) -> u64;
+
+    /// Human-readable display of a value.
+    display: func(value: list<u8>) -> string;
+
+    /// Parse a literal string into the type's binary representation.
+    parse: func(input: string) -> result<list<u8>, type-error>;
+
+    /// Built-in types that can be cast TO this type.
+    cast-from: func() -> list<logical-type>;
+
+    /// Built-in types this type can be cast TO.
+    cast-to: func() -> list<logical-type>;
+}
+
+/// Multi-type variant of `custom-type` — allows a single component
+/// to register more than one custom column type. Used by the
+/// MobilityDB shim (~30 temporal column types) and by the
+/// future PostGIS unified component (GEOMETRY + GEOGRAPHY +
+/// RASTER from a single artifact). Components needing only one
+/// type may still export the legacy `custom-type` interface; the
+/// host loader prefers `multi-custom-type` when both are present.
+interface multi-custom-type {
+    use types.{logical-type, ordering, type-error};
+
+    /// Metadata advertised for each custom type the component
+    /// supports. type-id must be >= 1000 (the built-in range
+    /// guard from `custom-type::type-id` still applies).
+    record custom-type-meta {
+        type-name: string,
+        type-id: u32,
+        storage-size: s32,
+        cast-from: list<logical-type>,
+        cast-to: list<logical-type>,
+    }
+
+    /// All custom types this component exports. Called once at
+    /// register time; the host caches the result and dispatches
+    /// per-type operations by `type-id`.
+    list-types: func() -> list<custom-type-meta>;
+
+    serialize:   func(type-id: u32, value: list<u8>) -> list<u8>;
+    deserialize: func(type-id: u32, bytes: list<u8>) -> result<list<u8>, type-error>;
+    compare:     func(type-id: u32, a: list<u8>, b: list<u8>) -> ordering;
+    hash-value:  func(type-id: u32, value: list<u8>) -> u64;
+    display:     func(type-id: u32, value: list<u8>) -> string;
+    parse:       func(type-id: u32, input: string) -> result<list<u8>, type-error>;
+}
+
+/// Host-provided logging.
+interface logging {
+    enum log-level {
+        trace,
+        debug,
+        info,
+        warn,
+        error,
+    }
+
+    log: func(level: log-level, message: string);
+}
+
+/// Custom type plugin world.
+world type-plugin {
+    import logging;
+    export custom-type;
+    export multi-custom-type;
+}
+
+/// Multi-only world. Use this when binding against components
+/// that implement `multi-custom-type` without the legacy
+/// singleton `custom-type` (or to bind ONLY the multi interface
+/// when both are present). The host loader binds against this
+/// after the composite-extension instantiation to detect whether
+/// the component exposes multi-type registration.
+world multi-only-type-plugin {
+    import logging;
+    export multi-custom-type;
+}

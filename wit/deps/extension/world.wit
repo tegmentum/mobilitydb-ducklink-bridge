@@ -1,0 +1,114 @@
+/// DataFission Composite Extension Plugin Interface
+///
+/// The umbrella world a fully-capable DataFission extension
+/// implements when shipped as a single wasm component. Aggregates
+/// every per-capability plugin interface so one `.wasm` file can
+/// surface to the host as a complete `dyn Extension`.
+///
+/// Mode A (AOT) extensions already implement the corresponding
+/// Rust traits in `df-plugin-api`. Mode B (runtime) extensions
+/// implement this world; the host's `WasmExtensionPlugin` adapter
+/// (E8) translates wasm exports into the same `Arc<dyn …>` trait
+/// objects, so both modes converge on `Extension::register(...)`.
+///
+/// Mapping to per-capability plugin packages:
+///
+///   - `datafission:sql-extension-plugin/metadata`         (E6)
+///   - `datafission:spatial-index-plugin/spatial-index`    (E6)
+///   - `datafission:system-catalog-plugin/system-catalog`  (E6)
+///   - `datafission:function-plugin/scalar-function`       (existing)
+///   - `datafission:function-plugin/aggregate-function`    (existing)
+///   - `datafission:function-plugin/table-function`        (existing)
+///   - `datafission:type-plugin/multi-custom-type`         (existing)
+///   - `datafission:index-plugin/index`                    (existing)
+///
+/// A plugin that doesn't provide a given category simply omits
+/// that interface from its `world …` declaration. The host
+/// detects what's available via component-model introspection at
+/// load time and only registers what's exported.
+
+package datafission:extension@1.0.0;
+
+/// Identity + version metadata. Every composite extension exports
+/// this; the host reads it once at `CREATE EXTENSION` time.
+interface identity {
+    /// Stable extension name (`"postgis"`). Used as the CREATE
+    /// EXTENSION argument and registry key. Must be ASCII-safe
+    /// and unique across loaded extensions in the session.
+    name: func() -> string;
+
+    /// Semver version string of this plugin build.
+    version: func() -> string;
+
+    /// API version of the umbrella `datafission:extension`
+    /// contract this plugin targets. Today: "1.0.0". The host
+    /// rejects plugins whose API version doesn't match.
+    api-version: func() -> string;
+}
+
+/// Host-provided logging — shared across every capability the
+/// plugin implements. Plugins call `log()` from any of their
+/// exported interfaces.
+interface logging {
+    enum log-level {
+        trace, debug, info, warn, error,
+    }
+    log: func(level: log-level, message: string);
+}
+
+/// The composite world a fully-capable extension exports.
+///
+/// Concrete plugins (e.g. postgis-extension's wasm variant) declare
+/// their own world based on what they actually provide. Examples:
+///
+///   // postgis: needs everything
+///   world postgis-extension {
+///       include extension;
+///   }
+///
+///   // a vector-only extension that only adds a custom type +
+///   // a few scalars:
+///   world vector-extension {
+///       import logging;
+///       export identity;
+///       export datafission:type-plugin/multi-custom-type@1.0.0;
+///       export datafission:function-plugin/scalar-function@1.0.0;
+///   }
+///
+/// The host's `WasmExtensionPlugin` introspects which of these
+/// interfaces a component exports and only registers the
+/// corresponding capability.
+world extension {
+    import logging;
+
+    /// Always required.
+    export identity;
+
+    /// Per-capability exports — implement as many as you need.
+    /// (See header doc-comment for the canonical mappings.)
+    export datafission:sql-extension-plugin/metadata@1.1.0;
+    export datafission:spatial-index-plugin/spatial-index@1.0.0;
+    export datafission:system-catalog-plugin/system-catalog@1.0.0;
+    /// Function-plugin REGISTRY forms (2026-06): one component
+    /// exports N scalars/aggregates/UDTFs via list+dispatch-by-name.
+    export datafission:function-plugin/scalar-function-registry@1.0.0;
+    export datafission:function-plugin/aggregate-function-registry@1.0.0;
+    export datafission:function-plugin/table-function-registry@1.0.0;
+    /// H5 (2026-06-23) — window-function-registry mirrors the
+    /// other three. Components that don't expose any window
+    /// function still need to export this; their `list-functions`
+    /// can return an empty list and the host skips registration.
+    export datafission:function-plugin/window-function-registry@1.0.0;
+    /// Custom data types. Post-#597 (2026-06) the canonical
+    /// shape is `multi-custom-type` — a single export carries
+    /// metadata + dispatch for N types via `type-id`. The
+    /// legacy singleton `custom-type` was dropped from the
+    /// composite world because every datafission-target
+    /// codegen emit now uses the multi shape (mobilitydb ships
+    /// ~30 temporal types; postgis ships GEOMETRY/GEOGRAPHY/
+    /// RASTER under one component). Components with only one
+    /// type still advertise it through `multi-custom-type`
+    /// with a single `list-types` entry.
+    export datafission:type-plugin/multi-custom-type@1.0.0;
+    export datafission:index-plugin/index@1.0.0;
+}

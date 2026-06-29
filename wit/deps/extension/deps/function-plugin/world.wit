@@ -1,0 +1,380 @@
+/// DataFission Function Plugin Interface
+///
+/// Defines the contract for dynamically-loaded function plugins.
+/// Plugins export scalar, aggregate, or table functions that
+/// execute entirely within the WASM sandbox.
+///
+/// ## Multi-function design (2026-06 — supersedes single-fn)
+///
+/// The composite extension world exports REGISTRY interfaces
+/// (`scalar-function-registry`, `aggregate-function-registry`,
+/// `table-function-registry`). Each registry advertises N
+/// functions via `list-functions() -> list<*-function-meta>` and
+/// dispatches per-call via a `name` parameter.
+///
+/// The host calls `list-functions` ONCE at register time, then
+/// instantiates N adapter trait objects against the session's
+/// function registry — one per advertised function. Per-call
+/// execution carries the function name back into the wasm so
+/// the guest can fan out to the right implementation. Wasmtime
+/// component-model dispatch makes the name parameter zero-copy
+/// (interned via the canonical ABI string region).
+///
+/// ## Why a registry, not separate per-function interfaces
+///
+/// A WIT world is a fixed set of exports declared at compile
+/// time. PostGIS has 67 scalar functions; an interface-per-fn
+/// design would need a separate composed `.wasm` per call site
+/// (one world per function), defeating the whole "single
+/// composed PostGIS extension" goal. Registry form lets one
+/// component expose every function via a single interface.
+
+package datafission:function-plugin@1.0.0;
+
+/// Shared types for function plugins.
+interface types {
+    /// Logical data types supported by DataFission.
+    enum logical-type {
+        boolean,
+        int8,
+        int16,
+        int32,
+        int64,
+        uint8,
+        uint16,
+        uint32,
+        uint64,
+        float32,
+        float64,
+        utf8,
+        binary,
+        date,
+        time,
+        timestamp,
+    }
+
+    /// A scalar value.
+    variant scalar-value {
+        null,
+        boolean(bool),
+        int8(s8),
+        int16(s16),
+        int32(s32),
+        int64(s64),
+        uint8(u8),
+        uint16(u16),
+        uint32(u32),
+        uint64(u64),
+        float32(f32),
+        float64(f64),
+        utf8(string),
+        binary(list<u8>),
+        date(s32),
+        time(s64),
+        timestamp(s64),
+    }
+
+    /// A row of scalar values.
+    type row = list<scalar-value>;
+
+    /// Column metadata.
+    record column-info {
+        name: string,
+        ty: logical-type,
+    }
+
+    /// Parameter signature: list of accepted type lists.
+    type param-signatures = list<list<logical-type>>;
+
+    /// Function error.
+    variant function-error {
+        invalid-argument(string),
+        type-error(string),
+        execution-error(string),
+        internal(string),
+        /// The dispatched function name doesn't exist in this
+        /// registry. Returned when the host calls a function by
+        /// a name `list-functions` didn't advertise — would
+        /// indicate a registration/lookup bug.
+        unknown-function(string),
+    }
+
+    /// Per-scalar-function metadata. Cached by the host at
+    /// register time; not re-read per call.
+    record scalar-function-meta {
+        /// Primary name (e.g., "st_distance"). The host
+        /// dispatches by this name.
+        name: string,
+        /// Additional names that resolve to the same function
+        /// (e.g., ["st_dist"] for ST_Distance).
+        aliases: list<string>,
+        /// Accepted parameter signatures.
+        param-types: param-signatures,
+        /// Same inputs always yield same outputs?
+        is-deterministic: bool,
+        /// Any null input ⇒ null output?
+        propagates-null: bool,
+    }
+
+    /// Per-aggregate metadata.
+    record aggregate-function-meta {
+        name: string,
+        aliases: list<string>,
+        param-types: param-signatures,
+        /// Whether the aggregate supports per-group execution.
+        /// Most do (SUM, AVG, COUNT); NTILE-style aggregates
+        /// that need the full dataset do not.
+        supports-grouped: bool,
+        /// Whether partial aggregation + merge is supported
+        /// (parallel exec, two-phase aggregation).
+        supports-partial: bool,
+        /// Order-sensitive (e.g., ARRAY_AGG depends on input
+        /// order)?
+        is-order-sensitive: bool,
+        /// Whether the aggregate accepts at least one
+        /// per-aggregate config captured from a literal SQL
+        /// argument (e.g. STRING_AGG's delimiter,
+        /// ST_ClusterWithin's distance, PERCENTILE_CONT's
+        /// fraction). When true the host MUST call
+        /// `create-accumulator-with-configs` (or the legacy
+        /// single-config variant when the indices list has length
+        /// 1) rather than `create-accumulator`. The planner
+        /// extracts each literal at compile time. Format of each
+        /// config string is per-aggregate; the guest parses.
+        accepts-config: bool,
+        /// Positions in the SQL arg list of the literal config
+        /// values. Empty when `accepts-config = false`. Single-
+        /// element for legacy single-config aggregates
+        /// (STRING_AGG → `[1]`, ST_ClusterWithin → `[1]`).
+        /// Multi-element for N-config aggregates
+        /// (ST_ClusterDBSCAN → `[1, 2]` for eps + min-points).
+        ///
+        /// The host filters out args at these positions before
+        /// feeding the rest to `accumulate` — the planner-captured
+        /// configs travel through
+        /// `create-accumulator-with-configs` instead.
+        config-arg-indices: list<u32>,
+    }
+
+    /// Per-table-function metadata.
+    record table-function-meta {
+        name: string,
+        aliases: list<string>,
+        param-types: param-signatures,
+    }
+
+    /// H5 (2026-06-23) — Per-window-function metadata.
+    ///
+    /// Window functions in DataFission's plugin contract get a
+    /// whole-partition compute hook rather than a streaming-frame
+    /// API. The host calls `compute-partition` once per partition
+    /// with the full per-row argument tuples (in `ORDER BY` order
+    /// when one is specified) and expects one scalar back per input
+    /// row. This shape fits the first concrete consumers — spatial
+    /// clustering (`ST_ClusterDBSCAN`-as-window), MEOS trajectory
+    /// `tcount`-as-window, etc. — all of which need the full
+    /// point set before emitting any label. Streaming-frame window
+    /// functions (LAG, LEAD, RANK, …) remain built-in.
+    record window-function-meta {
+        name: string,
+        aliases: list<string>,
+        param-types: param-signatures,
+    }
+}
+
+/// Scalar function registry — one component exports N scalars.
+///
+/// The host calls `list-functions()` once at extension register
+/// time to learn what's available, then issues `return-type` /
+/// `execute` / `execute-batch` calls dispatched by `name`.
+interface scalar-function-registry {
+    use types.{
+        logical-type, scalar-value, param-signatures, function-error,
+        scalar-function-meta,
+    };
+
+    /// Enumerate every scalar function this component exposes.
+    /// Called once at register time. The result is treated as
+    /// the source of truth for what `execute(name, …)` can
+    /// dispatch to.
+    list-functions: func() -> list<scalar-function-meta>;
+
+    /// Return type for a specific function given input types.
+    return-type: func(
+        name: string,
+        input-types: list<logical-type>,
+    ) -> result<logical-type, function-error>;
+
+    /// Execute one named function on a single set of arguments.
+    execute: func(
+        name: string,
+        args: list<scalar-value>,
+    ) -> result<scalar-value, function-error>;
+
+    /// Batch variant — same `name`, multiple argument sets.
+    execute-batch: func(
+        name: string,
+        args-batch: list<list<scalar-value>>,
+    ) -> result<list<scalar-value>, function-error>;
+}
+
+/// Aggregate function registry. Handle scope is per-component,
+/// not per-function: the host issues
+/// `create-accumulator(name)` and from there carries only the
+/// handle. The host is responsible for not mixing handles
+/// across functions in `merge` — the guest may panic / return
+/// `unknown-function` if asked to.
+interface aggregate-function-registry {
+    use types.{
+        logical-type, scalar-value, param-signatures, function-error,
+        aggregate-function-meta,
+    };
+
+    list-functions: func() -> list<aggregate-function-meta>;
+
+    return-type: func(
+        name: string,
+        input-types: list<logical-type>,
+    ) -> result<logical-type, function-error>;
+
+    /// Create an accumulator for a named aggregate. Returns an
+    /// opaque handle scoped to this component.
+    create-accumulator: func(name: string) -> result<u64, function-error>;
+
+    /// Legacy single-config variant. Host MUST call this when the
+    /// guest advertises `config-arg-indices` of length 1; the
+    /// guest's existing single-config handler stays valid.
+    create-accumulator-with-config: func(
+        name: string,
+        config: string,
+    ) -> result<u64, function-error>;
+
+    /// N-config variant — for aggregates whose meta declares an
+    /// `accepts-config = true` and `config-arg-indices` of length
+    /// >= 1. `configs` packs the planner-captured literals in
+    /// `config-arg-indices` order. Length-1 configs MAY also flow
+    /// through here (it's the canonical path going forward); the
+    /// legacy single-config variant above remains for back-compat
+    /// with guests that haven't been updated.
+    create-accumulator-with-configs: func(
+        name: string,
+        configs: list<string>,
+    ) -> result<u64, function-error>;
+
+    accumulate: func(
+        handle: u64,
+        value: scalar-value,
+    ) -> result<_, function-error>;
+
+    accumulate-batch: func(
+        handle: u64,
+        values: list<scalar-value>,
+    ) -> result<_, function-error>;
+
+    /// `target` and `source` must come from `create-accumulator`
+    /// calls with the same `name`; mixing functions is an error.
+    merge: func(
+        target: u64,
+        source: u64,
+    ) -> result<_, function-error>;
+
+    finalize: func(handle: u64) -> result<scalar-value, function-error>;
+    reset: func(handle: u64);
+    destroy-accumulator: func(handle: u64);
+}
+
+/// H5 (2026-06-23) — Window function registry. The host hands
+/// every row in a partition's argument tuples in `ORDER BY` order
+/// to `compute-partition` and receives one scalar per row. Aliases
+/// the existing scalar/aggregate registry shape: `list-functions`
+/// for the metadata + name-keyed dispatch.
+interface window-function-registry {
+    use types.{
+        logical-type, scalar-value, function-error,
+        window-function-meta,
+    };
+
+    list-functions: func() -> list<window-function-meta>;
+
+    return-type: func(
+        name: string,
+        input-types: list<logical-type>,
+    ) -> result<logical-type, function-error>;
+
+    /// Compute window values for one partition. `args-rows[i]` is
+    /// the argument tuple for the i-th row of the partition. The
+    /// returned list MUST have the same length as `args-rows`,
+    /// with values in the same row order.
+    compute-partition: func(
+        name: string,
+        args-rows: list<list<scalar-value>>,
+    ) -> result<list<scalar-value>, function-error>;
+}
+
+/// Table-valued function registry. `begin(name, args)` opens an
+/// iterator handle; `next-row(handle)` pulls rows until `none`.
+interface table-function-registry {
+    use types.{
+        logical-type, scalar-value, column-info, row, function-error,
+        table-function-meta,
+    };
+
+    list-functions: func() -> list<table-function-meta>;
+
+    /// Output schema for a named UDTF given input types.
+    output-schema: func(
+        name: string,
+        input-types: list<logical-type>,
+    ) -> result<list<column-info>, function-error>;
+
+    /// Start execution, returning a per-component iterator handle.
+    begin: func(
+        name: string,
+        args: list<scalar-value>,
+    ) -> result<u64, function-error>;
+
+    next-row: func(handle: u64)
+        -> option<result<row, function-error>>;
+
+    end: func(handle: u64);
+}
+
+/// Host-provided logging for function plugins. (Kept for
+/// per-function-plugin standalone worlds below; the composite
+/// `extension` world has its own `logging`.)
+interface logging {
+    enum log-level {
+        trace,
+        debug,
+        info,
+        warn,
+        error,
+    }
+
+    log: func(level: log-level, message: string);
+}
+
+/// Standalone per-category worlds — kept so a plugin author can
+/// ship a wasm component that only implements one capability
+/// (no need to also stub the other 7). The composite
+/// `datafission:extension/extension` world references the same
+/// registry interfaces.
+world scalar-function-plugin {
+    import logging;
+    export scalar-function-registry;
+}
+
+world aggregate-function-plugin {
+    import logging;
+    export aggregate-function-registry;
+}
+
+world table-function-plugin {
+    import logging;
+    export table-function-registry;
+}
+
+world window-function-plugin {
+    import logging;
+    export window-function-registry;
+}

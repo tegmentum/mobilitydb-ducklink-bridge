@@ -1,0 +1,166 @@
+/// DataFission SQL Extension Plugin Interface
+///
+/// Defines the contract for dynamically-loaded SQL syntax
+/// extensions. Plugins declare cast/operator/preprocessor rewrites
+/// the parser consults at planning time — e.g. PostGIS's
+/// `::geometry` cast, `&&` bbox operator, `<->` KNN distance.
+///
+/// The data is static metadata (no per-call work into the wasm):
+/// the host snapshots it once at registration time and uses the
+/// in-memory tables thereafter. This keeps parser hot paths free
+/// of cross-boundary overhead.
+
+package datafission:sql-extension-plugin@1.1.0;
+
+interface types {
+    /// Discriminant for which source-side expression shape a
+    /// cast-rewrite should match.
+    ///
+    /// `any` — source-blind (default; matches column refs, function
+    ///   results, literals, anything). Useful for output casts like
+    ///   `geom::text` where any geometry-returning expression should
+    ///   route through `ST_AsText`.
+    ///
+    /// `string-literal` — only match when the cast source is a string
+    ///   literal (e.g. `CAST('POINT(0 0)' AS GEOMETRY)`). Lets shims
+    ///   register input-direction casts that are SAFE: rewriting
+    ///   `CAST('text' AS GEOMETRY)` → `st_geomfromtext('text')` is
+    ///   correct; rewriting `CAST(geom_col AS GEOMETRY)` to the same
+    ///   thing is NOT (it'd try to parse the WKB blob as text).
+    ///
+    /// Added in v1.2.0 (H7, 2026-06-22) — older shims without this
+    /// field get treated as `any` for source-compatibility.
+    ///
+    /// F2 (2026-06-23) adds `geography-column` — restricts the rewrite
+    /// to expressions whose root is a column reference declared as
+    /// the extension's GEOGRAPHY column type (type_id 2003 in
+    /// postgis). Solves the audit Item 8 collision: `geog::geometry`
+    /// would otherwise share its target type with the existing
+    /// string-literal `geometry` rewrite under an `any` source-kind.
+    /// New shims register the `geography-column` variant; older shims
+    /// (none today) continue to work because they never advertise it.
+    enum cast-source-kind {
+        any,
+        string-literal,
+        geography-column,
+    }
+
+    /// A cast rewrite directive.
+    ///
+    /// When the parser sees `expr::<target-type>` where
+    /// `target-type` matches `target-type` here, it rewrites the
+    /// expression to `function-name(expr)`. `source-fn-hint`
+    /// disambiguates output casts that depend on the source side
+    /// (`geom::text` only routes to ST_AsText when the source is a
+    /// known geometry-returning function). `source-fn-hint = ""`
+    /// matches any source (the source-blind path).
+    ///
+    /// `source-kind` further restricts the match by source shape.
+    record cast-rewrite {
+        target-type: string,
+        function-name: string,
+        source-fn-hint: string,
+        source-kind: cast-source-kind,  // H7: default `any` keeps prior behavior
+    }
+
+    /// An operator rewrite directive.
+    ///
+    /// When the parser sees `a OP b` where `OP` matches `symbol`
+    /// (canonical symbolic form, e.g. `"&&"` for bbox intersects),
+    /// it rewrites to `function-name(a, b)`.
+    ///
+    /// `lhs-type-id` and `rhs-type-id` qualify the dispatch by
+    /// operand type. They use the same `u32` namespace as
+    /// `multi-custom-type.list-types().type-id` (e.g. 3001 for
+    /// TFLOAT_SEQUENCE) plus a small range for built-in types.
+    /// `none` is a wildcard — matches any operand type.
+    ///
+    /// The host's runtime-extension adapter
+    /// (`DynSqlExtension::operator_rewrite_typed` in
+    /// `df-plugin-loader`) implements a 4-tier lookup against the
+    /// registered entries:
+    ///   1. exact `(symbol, lhs, rhs)`
+    ///   2. `(symbol, lhs, *)`
+    ///   3. `(symbol, *, rhs)`
+    ///   4. `(symbol, *, *)`
+    /// first non-empty wins, falling through to the generic SQL
+    /// operator if none match. Statically-linked extensions can
+    /// override `SqlExtension::operator_rewrite_typed` directly;
+    /// they are expected to follow the same tier order so dispatch
+    /// stays consistent across plugin combinations.
+    ///
+    /// Parser-side note: today the SQL parser calls the untyped
+    /// `lookup_operator_rewrite` (operand types are not yet
+    /// inferred at parse time), which falls through to tier 4.
+    /// Typed entries (`lhs`/`rhs` ≠ `none`) therefore do NOT fire
+    /// from the parser path — they're staged for a planner-side
+    /// rewrite pass that knows the operand types. Until then, an
+    /// extension that registers a wildcard entry for a symbol can
+    /// hijack the same symbol's typed entries from a different
+    /// extension when both are loaded; mixing wildcard and typed
+    /// entries across plugins requires the planner pass to land.
+    record operator-rewrite {
+        symbol: string,
+        lhs-type-id: option<u32>,
+        rhs-type-id: option<u32>,
+        function-name: string,
+    }
+
+    /// A preprocessor pattern.
+    ///
+    /// Pre-tokenisation `(LHS) <op> (RHS) → function-name(LHS, RHS)`
+    /// rewrite. Used for operators sqlparser-rs can't tokenise on
+    /// its own (PostGIS `<->`, `<#>`). The host applies it as a
+    /// regex on the SQL source before parsing, skipping
+    /// single-quoted strings.
+    record preprocessor-pattern {
+        op-token: string,
+        function-name: string,
+    }
+
+    /// Metadata error.
+    variant sql-ext-error {
+        invalid-name(string),
+        internal(string),
+    }
+}
+
+/// Static metadata interface — plugins declare what they rewrite.
+/// The host fetches all three lists once at load time.
+interface metadata {
+    use types.{cast-rewrite, operator-rewrite, preprocessor-pattern, sql-ext-error};
+
+    /// Stable extension name (e.g. `"postgis"`). Used for de-dup
+    /// and `CREATE EXTENSION <name>`.
+    name: func() -> string;
+
+    /// Semver version of this plugin.
+    version: func() -> string;
+
+    /// Return all `::target-type` cast rewrites this plugin
+    /// contributes (input + output + conversion casts). Each
+    /// entry's `source-fn-hint` may be `""` for source-blind.
+    list-cast-rewrites: func() -> result<list<cast-rewrite>, sql-ext-error>;
+
+    /// Return all binary-operator-token rewrites
+    /// (`&&` → `ST_BBOXINTERSECTS`, etc.).
+    list-operator-rewrites: func() -> result<list<operator-rewrite>, sql-ext-error>;
+
+    /// Return all pre-tokenisation source-rewrite patterns
+    /// (`<->` → `ST_DISTANCE_OP`, etc.).
+    list-preprocessor-patterns: func() -> result<list<preprocessor-pattern>, sql-ext-error>;
+}
+
+/// Host-provided logging.
+interface logging {
+    enum log-level {
+        trace, debug, info, warn, error,
+    }
+    log: func(level: log-level, message: string);
+}
+
+/// SQL extension plugin world.
+world sql-extension-plugin {
+    import logging;
+    export metadata;
+}

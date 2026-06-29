@@ -1,0 +1,1120 @@
+/// Minimal package declaration for `postgis:wasm@0.1.0`.
+///
+/// Mirrors the SUBSET of postgis-wasm interfaces this shim
+/// depends on at the WIT level. The actual implementations are
+/// inside `postgis-composed.wasm`; `wac plug` links the shim's
+/// imports against that component's exports at composition time.
+///
+/// IMPORTANT: `postgis-types` is the VERBATIM copy of the
+/// upstream interface — the geometry / geography resources are
+/// nominal types, and `wac plug` checks resource-shape identity
+/// across importer + exporter. A subset declaration here breaks
+/// composition with "resource types are not the same". Other
+/// interfaces can be subsets (we only declare the functions the
+/// shim calls), but the type-defining interface must match.
+///
+/// The signatures here MUST stay in lockstep with what
+/// `wasm-tools component wit postgis-composed.wasm` reports —
+/// drift means `wac plug` will fail at composition.
+
+package postgis:wasm@0.1.0;
+
+/// Verbatim copy of the upstream `postgis:wasm/postgis-types`.
+/// See header note above — the geometry / geography resource
+/// shapes are part of the identity, so they have to match
+/// exactly (every method, every static func).
+interface postgis-types {
+    record coord {
+        x: f64,
+        y: f64,
+    }
+
+    record coord-z {
+        x: f64,
+        y: f64,
+        z: f64,
+    }
+
+    record coord-zm {
+        x: f64,
+        y: f64,
+        z: option<f64>,
+        m: option<f64>,
+    }
+
+    record bbox {
+        min-x: f64,
+        min-y: f64,
+        max-x: f64,
+        max-y: f64,
+    }
+
+    record box3d {
+        min-x: f64,
+        min-y: f64,
+        min-z: f64,
+        max-x: f64,
+        max-y: f64,
+        max-z: f64,
+    }
+
+    enum geometry-type {
+        point,
+        line-string,
+        polygon,
+        multi-point,
+        multi-line-string,
+        multi-polygon,
+        geometry-collection,
+    }
+
+    variant postgis-error {
+        invalid-geometry(string),
+        parse-error(string),
+        unsupported-operation(string),
+        numeric-error(string),
+        srid-mismatch(string),
+        general(string),
+    }
+
+    record buffer-params {
+        quad-segs: option<u32>,
+        end-cap: option<string>,
+        join: option<string>,
+        mitre-limit: option<f64>,
+    }
+
+    record extremes {
+        x-min-point: coord,
+        x-max-point: coord,
+        y-min-point: coord,
+        y-max-point: coord,
+    }
+
+    record inscribed-circle {
+        center: coord,
+        nearest: coord,
+        radius: f64,
+    }
+
+    record valid-detail {
+        valid: bool,
+        reason: option<string>,
+        location: option<coord>,
+    }
+
+    record coordinate-stats {
+        x-min: f64,
+        x-max: f64,
+        x-avg: f64,
+        y-min: f64,
+        y-max: f64,
+        y-avg: f64,
+        z-min: option<f64>,
+        z-max: option<f64>,
+        z-avg: option<f64>,
+        count: u32,
+    }
+
+    resource geography {
+        from-wkt: static func(wkt: string) -> result<geography, postgis-error>;
+        from-wkb: static func(wkb: list<u8>) -> result<geography, postgis-error>;
+        from-geojson: static func(json: string) -> result<geography, postgis-error>;
+        point: static func(lon: f64, lat: f64) -> geography;
+        as-wkt: func() -> string;
+        as-wkb: func() -> list<u8>;
+        as-geojson: func() -> string;
+        geometry-type: func() -> geometry-type;
+        srid: func() -> option<s32>;
+        is-empty: func() -> bool;
+        clone: func() -> geography;
+        distance: func(other: borrow<geography>) -> f64;
+        length: func() -> f64;
+        area: func() -> f64;
+        perimeter: func() -> f64;
+        azimuth: func(other: borrow<geography>) -> option<f64>;
+        project: func(azimuth: f64, distance: f64) -> result<geography, postgis-error>;
+        to-geometry: func() -> geometry;
+    }
+
+    resource geometry {
+        from-wkt: static func(wkt: string) -> result<geometry, postgis-error>;
+        from-wkb: static func(wkb: list<u8>) -> result<geometry, postgis-error>;
+        from-geojson: static func(json: string) -> result<geometry, postgis-error>;
+        point: static func(x: f64, y: f64) -> geometry;
+        point-z: static func(x: f64, y: f64, z: f64) -> geometry;
+        line-string: static func(coords: list<coord>) -> result<geometry, postgis-error>;
+        polygon: static func(exterior: list<coord>, holes: list<list<coord>>)
+            -> result<geometry, postgis-error>;
+        as-wkt: func() -> string;
+        as-wkb: func() -> list<u8>;
+        as-geojson: func() -> string;
+        geometry-type: func() -> geometry-type;
+        srid: func() -> option<s32>;
+        set-srid: func(srid: s32) -> geometry;
+        num-dimensions: func() -> u32;
+        is-empty: func() -> bool;
+        clone: func() -> geometry;
+    }
+}
+
+/// W1.4 expands output methods: ST_AsBinary / ST_AsEWKT /
+/// ST_AsGeoJSON / ST_AsHexEWKB added beside the existing ST_AsText.
+/// Output-formats family adds ST_AsGML / ST_AsKML / ST_AsSVG /
+/// ST_AsMVTGeom — all routed verbatim from the upstream
+/// `postgis-output` interface.
+interface postgis-output {
+    use postgis-types.{geometry, postgis-error};
+
+    st-as-text: func(geom: borrow<geometry>) -> string;
+    st-as-ewkt: func(geom: borrow<geometry>) -> string;
+    st-as-binary: func(geom: borrow<geometry>) -> list<u8>;
+    st-as-ewkb: func(geom: borrow<geometry>) -> list<u8>;
+    st-as-hexewkb: func(geom: borrow<geometry>) -> string;
+    st-as-geojson: func(geom: borrow<geometry>) -> string;
+    st-as-gml: func(
+        geom: borrow<geometry>, version: option<u32>, precision: option<u32>,
+    ) -> result<string, postgis-error>;
+    st-as-kml: func(geom: borrow<geometry>) -> result<string, postgis-error>;
+    st-as-svg: func(geom: borrow<geometry>) -> result<string, postgis-error>;
+    st-as-mvt-geom: func(
+        geom: borrow<geometry>,
+        bounds-minx: f64, bounds-miny: f64,
+        bounds-maxx: f64, bounds-maxy: f64,
+        extent: option<u32>, buffer: option<u32>, clip: option<bool>,
+    ) -> result<geometry, postgis-error>;
+}
+
+interface postgis-spatial-index {
+    /// Opaque tree handle. The shim treats this as a u64 token —
+    /// each `build` returns a fresh value.
+    type spatial-index-handle = u64;
+
+    /// Create an empty STRtree with the given node capacity.
+    create-index: func(node-capacity: u32) -> spatial-index-handle;
+
+    /// Finalise the tree after all `insert-wkb` calls. Returns
+    /// `true` on success; `false` is the wasm-side equivalent of
+    /// a build failure.
+    build: func(tree: spatial-index-handle) -> bool;
+
+    /// Insert a WKB-encoded geometry under `item-id`. Returns
+    /// `true` if the WKB parsed and inserted cleanly.
+    insert-wkb: func(tree: spatial-index-handle, wkb: list<u8>, item-id: u64) -> bool;
+
+    /// Bounding-box query — return all row IDs whose envelope
+    /// intersects the given rect.
+    query-envelope: func(
+        tree: spatial-index-handle,
+        min-x: f64,
+        min-y: f64,
+        max-x: f64,
+        max-y: f64,
+    ) -> list<u64>;
+
+    /// k-nearest-neighbour query; `wkb` is the query geometry.
+    query-knn: func(tree: spatial-index-handle, wkb: list<u8>, k: u32) -> list<u64>;
+
+    /// Within-distance query against a WKB geometry.
+    query-within-distance: func(
+        tree: spatial-index-handle,
+        wkb: list<u8>,
+        max-distance: f64,
+    ) -> list<u64>;
+
+    /// Drop the tree.
+    destroy-index: func(tree: spatial-index-handle);
+}
+
+/// W1.4 — minimal constructors subset. The shim's scalar registry
+/// dispatches ST_MakePoint / ST_GeomFromText through these.
+/// Phase C: geography constructors added — ST_GeogFromText
+/// returns a geography resource that the shim then serializes
+/// to bytes via `as_wkb()` for SQL transport.
+interface postgis-constructors {
+    use postgis-types.{geometry, geography, postgis-error};
+
+    st-make-point: func(x: f64, y: f64) -> geometry;
+    st-geom-from-text: func(wkt: string) -> result<geometry, postgis-error>;
+    st-geog-from-text: func(wkt: string) -> result<geography, postgis-error>;
+    st-geog-from-wkb: func(wkb: list<u8>) -> result<geography, postgis-error>;
+    st-geog-point: func(lon: f64, lat: f64) -> geography;
+
+    /// Input parsers — ported from postgis-adapter (`input-parsers`
+    /// family). Two overloads of ST_GeomFromWKB / ST_GeomFromGML
+    /// dispatch via the SRID-suffixed variant from the shim.
+    /// `st-geom-from-ewkb` is the SRID-preserving counterpart to
+    /// `st-as-ewkb` in postgis-output; the shim uses both as the
+    /// geometry wire format across the SQL `Binary` boundary so
+    /// SRID round-trips through ST_SetSRID -> ST_AsEWKT etc.
+    st-geom-from-wkb: func(wkb: list<u8>) -> result<geometry, postgis-error>;
+    st-geom-from-ewkb: func(ewkb: list<u8>) -> result<geometry, postgis-error>;
+    st-geom-from-kml: func(kml: string) -> result<geometry, postgis-error>;
+    st-geom-from-gml: func(gml: string) -> result<geometry, postgis-error>;
+    st-geom-from-gml-srid: func(gml: string, srid: s32) -> result<geometry, postgis-error>;
+}
+
+/// Phase C — geodetic surface. Spheroidal calculations on the
+/// WGS84 ellipsoid via GeographicLib. All units are meters /
+/// square meters where applicable.
+interface postgis-geodetic {
+    use postgis-types.{geometry, geography, postgis-error};
+
+    st-geog-distance: func(geog1: borrow<geography>, geog2: borrow<geography>) -> f64;
+    st-geog-length: func(geog: borrow<geography>) -> f64;
+    st-geog-area: func(geog: borrow<geography>) -> f64;
+    st-geog-perimeter: func(geog: borrow<geography>) -> f64;
+    st-geog-dwithin: func(geog1: borrow<geography>, geog2: borrow<geography>, distance: f64) -> bool;
+    st-geog-azimuth: func(geog1: borrow<geography>, geog2: borrow<geography>) -> option<f64>;
+    st-geog-buffer: func(geog: borrow<geography>, distance: f64) -> result<geography, postgis-error>;
+    st-geog-centroid: func(geog: borrow<geography>) -> result<geography, postgis-error>;
+    st-geog-covered-by: func(geog1: borrow<geography>, geog2: borrow<geography>) -> bool;
+    st-geog-covers: func(geog1: borrow<geography>, geog2: borrow<geography>) -> bool;
+    st-geog-intersects: func(geog1: borrow<geography>, geog2: borrow<geography>) -> bool;
+
+    /// Geometry-typed spherical fallback for `ST_DistanceSphere` —
+    /// no ellipsoidal correction, but cheaper than the geography
+    /// path and a direct port of PostgreSQL's legacy semantics.
+    st-distance-sphere: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<f64, postgis-error>;
+
+    /// Returns the destination point produced by projecting
+    /// `point` `distance` meters along `azimuth` radians on the
+    /// WGS84 ellipsoid. Geometry-typed (not geography).
+    st-project: func(point: borrow<geometry>, distance: f64, azimuth: f64) -> result<geometry, postgis-error>;
+}
+
+/// W1.4 — canonical measurement subset (Area / Length / Perimeter
+/// / Distance covers ~80% of measurement usage in SQL queries).
+/// Remaining 21 measurement variants (spheroid, three-d, hausdorff,
+/// frechet, etc.) wire incrementally on the same pattern.
+interface postgis-measurements {
+    use postgis-types.{geometry, postgis-error};
+
+    st-area: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-length: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-perimeter: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-distance: func(geom1: borrow<geometry>, geom2: borrow<geometry>)
+        -> result<f64, postgis-error>;
+    st-azimuth: func(point1: borrow<geometry>, point2: borrow<geometry>)
+        -> result<f64, postgis-error>;
+    // Arc 6 — broader measurement surface (8 fns).
+    st-length-threed: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-perimeter-threed: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-max-distance: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<f64, postgis-error>;
+    st-hausdorff-distance: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<f64, postgis-error>;
+    st-frechet-distance: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<f64, postgis-error>;
+    st-closest-point: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-shortest-line: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-longest-line: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<geometry, postgis-error>;
+}
+
+/// 3D variants of common 2D functions. These use the Z values
+/// carried alongside the 2D geometry; inputs without Z are treated
+/// as Z = 0. Identifiers use the `-threed` suffix so they conform
+/// to the WIT spec (each hyphen-segment must start with a letter).
+interface postgis-three-d {
+    use postgis-types.{geometry, postgis-error};
+
+    st-reverse-threed: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-centroid-threed: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-envelope-threed: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-boundary-threed: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+}
+
+/// W1.4 — processing slice (Buffer / Centroid / Simplify / ConvexHull
+/// / Boundary / PointOnSurface) and four set ops (Union / Intersection
+/// / Difference / SymDifference).
+interface postgis-processing {
+    use postgis-types.{geometry, postgis-error};
+
+    st-buffer: func(geom: borrow<geometry>, distance: f64) -> result<geometry, postgis-error>;
+    st-centroid: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-simplify: func(geom: borrow<geometry>, tolerance: f64) -> result<geometry, postgis-error>;
+    st-convex-hull: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-boundary: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-point-on-surface: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-union: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-intersection: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-difference: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-sym-difference: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-make-valid: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-reverse: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-line-merge: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    // Arc 6 — broader processing surface (8 fns).
+    st-unary-union: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-simplify-preserve-topology: func(geom: borrow<geometry>, tolerance: f64) -> result<geometry, postgis-error>;
+    st-concave-hull: func(geom: borrow<geometry>, target-percent: f64) -> result<geometry, postgis-error>;
+    st-oriented-envelope: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-minimum-bounding-circle: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-force-rhr: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-normalize: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-snap-to-grid: func(geom: borrow<geometry>, size: f64) -> result<geometry, postgis-error>;
+    // misc-accessors family — polygon assembly + smoothing.
+    st-build-area: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-chaikin-smoothing: func(geom: borrow<geometry>, iterations: u32) -> result<geometry, postgis-error>;
+}
+
+/// Linear-referencing — operations parameterised by a fractional
+/// position along a LineString (and the inverse). All upstream
+/// signatures take and return ISO WKB geometry; we expose the
+/// subset most common in SQL workloads first.
+interface postgis-linear-ref {
+    use postgis-types.{geometry, postgis-error};
+
+    st-line-interpolate-point: func(geom: borrow<geometry>, fraction: f64) -> result<geometry, postgis-error>;
+    st-line-locate-point: func(line: borrow<geometry>, point: borrow<geometry>) -> result<f64, postgis-error>;
+    st-line-substring: func(geom: borrow<geometry>, start-fraction: f64, end-fraction: f64) -> result<geometry, postgis-error>;
+    st-add-measure: func(geom: borrow<geometry>, measure-start: f64, measure-end: f64) -> result<geometry, postgis-error>;
+    st-line-crossing-direction: func(line1: borrow<geometry>, line2: borrow<geometry>) -> result<s32, postgis-error>;
+    st-line-extend: func(line: borrow<geometry>, start-distance: f64, end-distance: f64) -> result<geometry, postgis-error>;
+    st-line-interpolate-points: func(geom: borrow<geometry>, fraction: f64, repeat: bool) -> result<geometry, postgis-error>;
+    st-locate-along: func(geom: borrow<geometry>, measure: f64) -> result<geometry, postgis-error>;
+    st-locate-between: func(geom: borrow<geometry>, measure-start: f64, measure-end: f64) -> result<geometry, postgis-error>;
+}
+
+/// W1.4 — aggregates slice. PostGIS aggregates take a whole batch
+/// (list<borrow<geometry>>) rather than a streaming accumulator;
+/// the shim adapts by buffering WKBs in an in-guest per-handle
+/// HashMap and calling the postgis-wasm function at finalize time.
+interface postgis-aggregates {
+    use postgis-types.{geometry, postgis-error};
+
+    /// 3D bounding box record returned by ST_3DExtent. The shim
+    /// formats this into the PostGIS-canonical
+    /// `"BOX3D(min_x min_y min_z,max_x max_y max_z)"` string for
+    /// SQL consumption.
+    record bbox3d {
+        min-x: f64,
+        min-y: f64,
+        min-z: f64,
+        max-x: f64,
+        max-y: f64,
+        max-z: f64,
+    }
+
+    st-union-aggregate: func(geoms: list<borrow<geometry>>) -> result<geometry, postgis-error>;
+    st-make-line-aggregate: func(points: list<borrow<geometry>>) -> result<geometry, postgis-error>;
+    st-polygonize-aggregate: func(geoms: list<borrow<geometry>>) -> result<geometry, postgis-error>;
+
+    /// Returns a list of cluster geometries. The shim encodes the
+    /// list as a single GeometryCollection WKB via `st-collect`
+    /// so the result fits the single `scalar-value::binary` shape
+    /// the datafission aggregate trait expects. Callers iterate
+    /// clusters via `ST_NumGeometries` + `ST_GeometryN`.
+    st-cluster-intersecting-aggregate: func(geoms: list<borrow<geometry>>)
+        -> result<list<geometry>, postgis-error>;
+
+    /// Variant of cluster-intersecting that uses a proximity
+    /// threshold instead of strict intersection. Distance is the
+    /// per-aggregate config the planner extracts from the literal
+    /// second SQL argument of `ST_ClusterWithin(geom, distance)`.
+    st-cluster-within-aggregate: func(
+        geoms: list<borrow<geometry>>,
+        distance: f64,
+    ) -> result<list<geometry>, postgis-error>;
+
+    /// 3D bounding box across all inputs. Upstream postgis-wasm
+    /// uses the `-threed` suffix rather than a `3d-` prefix so the
+    /// identifier conforms to the WIT spec (digit-leading
+    /// hyphen-segments are rejected by strict wit-bindgen).
+    st-extent-threed: func(geoms: list<borrow<geometry>>) -> bbox3d;
+}
+
+/// W1.4 — transformations slice (Translate / Scale / Rotate / Transform).
+/// ST_SetSRID is exposed as a method on the geometry resource itself
+/// (`set-srid`) — the shim's dispatch calls it directly without
+/// needing a separate interface import here.
+interface postgis-transformations {
+    use postgis-types.{geometry, postgis-error};
+
+    st-translate: func(geom: borrow<geometry>, dx: f64, dy: f64) -> result<geometry, postgis-error>;
+    st-scale: func(geom: borrow<geometry>, sx: f64, sy: f64) -> result<geometry, postgis-error>;
+    st-rotate: func(geom: borrow<geometry>, angle: f64) -> result<geometry, postgis-error>;
+    st-transform: func(geom: borrow<geometry>, to-srid: s32) -> result<geometry, postgis-error>;
+    st-flip-coordinates: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    // misc-transforms family — affine, force-2D/3D, longitude shift, quantize.
+    st-affine: func(geom: borrow<geometry>, a: f64, b: f64, c: f64, d: f64, e: f64, f: f64) -> result<geometry, postgis-error>;
+    st-force-twod: func(geom: borrow<geometry>) -> geometry;
+    st-force-threed: func(geom: borrow<geometry>) -> geometry;
+    st-quantize-coordinates: func(geom: borrow<geometry>, prec-x: u32, prec-y: u32) -> result<geometry, postgis-error>;
+    st-shift-longitude: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+}
+
+/// W1.4 — accessor slice (X / Y / SRID / NumPoints / NumGeometries
+/// / GeometryType / Dimension / XMin / XMax / YMin / YMax).
+interface postgis-accessors {
+    use postgis-types.{geometry, postgis-error};
+
+    st-x: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-y: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-xmin: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-xmax: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-ymin: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-ymax: func(geom: borrow<geometry>) -> result<f64, postgis-error>;
+    st-npoints: func(geom: borrow<geometry>) -> u32;
+    st-num-geometries: func(geom: borrow<geometry>) -> u32;
+    st-geometry-type: func(geom: borrow<geometry>) -> string;
+    st-dimension: func(geom: borrow<geometry>) -> s32;
+    st-srid: func(geom: borrow<geometry>) -> s32;
+    st-num-interior-rings: func(geom: borrow<geometry>) -> result<u32, postgis-error>;
+    st-z: func(geom: borrow<geometry>) -> result<option<f64>, postgis-error>;
+    st-m: func(geom: borrow<geometry>) -> result<option<f64>, postgis-error>;
+    st-start-point: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-end-point: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-exterior-ring: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-envelope: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-multi: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-collect: func(geoms: list<borrow<geometry>>) -> result<geometry, postgis-error>;
+    st-dump-points: func(geom: borrow<geometry>) -> list<geometry>;
+    // misc-accessors family — index-based + sub-geometry extraction.
+    st-point-n: func(geom: borrow<geometry>, n: u32) -> result<geometry, postgis-error>;
+    st-geometry-n: func(geom: borrow<geometry>, n: u32) -> result<geometry, postgis-error>;
+    st-bounding-diagonal: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+    st-collection-extract: func(geom: borrow<geometry>, type-num: u32) -> result<geometry, postgis-error>;
+    st-collection-homogenize: func(geom: borrow<geometry>) -> result<geometry, postgis-error>;
+}
+
+/// W1.4 — predicate slice (10 binary bool relations + ST_DWithin).
+/// These dominate spatial `WHERE` clauses; together they cover most
+/// "is this geom inside / touching / near that one" queries.
+///
+/// Parameter names (geom1, geom2) match the upstream verbatim —
+/// `wac plug` validates resource fingerprints using the full
+/// declaration including param names. Using `g1, g2` here
+/// triggers "resource types are not the same" at composition.
+interface postgis-predicates {
+    use postgis-types.{geometry, postgis-error};
+
+    st-contains:   func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-covers:     func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-covered-by: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-crosses:    func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-disjoint:   func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-equals:     func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-intersects: func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-overlaps:   func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-touches:    func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-within:     func(geom1: borrow<geometry>, geom2: borrow<geometry>) -> result<bool, postgis-error>;
+    st-dwithin:    func(geom1: borrow<geometry>, geom2: borrow<geometry>, distance: f64)
+        -> result<bool, postgis-error>;
+    st-contains-properly: func(geom1: borrow<geometry>, geom2: borrow<geometry>)
+        -> result<bool, postgis-error>;
+
+    // Validity / topology predicates (unary geom -> bool, infallible).
+    st-is-valid:  func(geom: borrow<geometry>) -> bool;
+    st-is-simple: func(geom: borrow<geometry>) -> bool;
+    st-is-empty:  func(geom: borrow<geometry>) -> bool;
+    st-is-closed: func(geom: borrow<geometry>) -> bool;
+    st-is-ring:   func(geom: borrow<geometry>) -> bool;
+    st-has-z:     func(geom: borrow<geometry>) -> bool;
+    st-has-m:     func(geom: borrow<geometry>) -> bool;
+}
+
+/// Window-function clustering primitives. The shim wraps these as
+/// row-vs-row aggregates (e.g. ST_ClusterDBSCAN buckets inputs by
+/// cluster ID and emits a GeometryCollection of per-cluster
+/// MultiGeometries). Verbatim signatures from upstream
+/// `postgis-wasm/wit/clustering.wit` (the resource fingerprint
+/// rule applies — see `wit/world.wit` for `wac plug`'s param-name
+/// + resource-shape identity requirements).
+interface postgis-clustering {
+    use postgis-types.{geometry, postgis-error};
+
+    st-cluster-dbscan: func(geoms: list<borrow<geometry>>, eps: f64, min-points: u32)
+        -> result<list<option<u32>>, postgis-error>;
+
+    /// ST_ClusterKMeans — K-Means clustering. Returns a cluster id in
+    /// `[0, k)` for each input geometry. Verbatim from upstream
+    /// `postgis-wasm/wit/clustering.wit`.
+    st-cluster-kmeans: func(geoms: list<borrow<geometry>>, k: u32)
+        -> result<list<u32>, postgis-error>;
+
+    /// ST_ClusterIntersecting — group geometries that intersect into
+    /// per-cluster GeometryCollections. The shim's scalar dispatch
+    /// expands a pre-collected GeometryCollection input into its
+    /// member geometries before calling.
+    st-cluster-intersecting: func(geoms: list<borrow<geometry>>)
+        -> result<list<geometry>, postgis-error>;
+
+    /// ST_ClusterWithin — like ST_ClusterIntersecting but groups
+    /// inputs whose distance is at most `distance`.
+    st-cluster-within: func(geoms: list<borrow<geometry>>, distance: f64)
+        -> result<list<geometry>, postgis-error>;
+}
+
+/// PostGIS bounding-box / KNN operators, exposed as plain functions.
+///
+/// These mirror the SQL operators the PostgreSQL planner uses for
+/// index-aware queries (`&&`, `&&&`, `<->`, `<#>`, `~=`). Exposing them
+/// as functions lets a downstream planner map an operator token to a
+/// call. They follow the bare-return convention: a safe default
+/// (`false` / `inf`) is returned for degenerate input (e.g. an empty
+/// geometry with no bounding box).
+interface postgis-operators {
+    use postgis-types.{geometry};
+
+    /// `&&` — the 2D bounding boxes of A and B intersect.
+    op-bbox-intersects-twod: func(a: borrow<geometry>, b: borrow<geometry>) -> bool;
+
+    /// `&&&` — the n-D bounding boxes intersect (Z included when both
+    /// geometries carry Z; otherwise equivalent to `&&`).
+    op-bbox-intersects-nd: func(a: borrow<geometry>, b: borrow<geometry>) -> bool;
+
+    /// `<->` — distance between the geometries (KNN ordering operator).
+    op-knn-distance: func(a: borrow<geometry>, b: borrow<geometry>) -> f64;
+
+    /// `<#>` — distance between the geometries' 2D bounding boxes.
+    op-bbox-distance: func(a: borrow<geometry>, b: borrow<geometry>) -> f64;
+
+    /// `~=` — geometrically equal (ST_Equals topological semantics).
+    op-equals-spatially: func(a: borrow<geometry>, b: borrow<geometry>) -> bool;
+}
+
+/// Raster type primitives — Arc 3 of
+/// docs/PLAN-postgis-mode-b-remaining-arcs.md. MVP slice: the
+/// `raster` resource (verbatim from upstream's
+/// `postgis-raster-types`) plus the bare-minimum constructors
+/// + accessors needed for an end-to-end smoke (build a raster,
+/// read back its dimensions). Resource-fingerprint identity rule
+/// applies — every field on `resource raster` must mirror upstream
+/// verbatim, else `wac plug` refuses to link.
+interface postgis-raster-types {
+    variant raster-error {
+        parse-error(string),
+        out-of-bounds(string),
+        type-mismatch(string),
+        general(string),
+    }
+
+    enum pixel-type {
+        bool1,
+        uint8,
+        int8,
+        uint16,
+        int16,
+        uint32,
+        int32,
+        float32,
+        float64,
+    }
+
+    resource raster {
+        constructor();
+        width: func() -> u32;
+        height: func() -> u32;
+        num-bands: func() -> u32;
+        georeference: func() -> tuple<f64, f64, f64, f64, f64, f64>;
+        srid: func() -> option<s32>;
+        value: func(band: u32, x: u32, y: u32) -> f64;
+        as-binary: func() -> list<u8>;
+    }
+
+    from-binary: func(bytes: list<u8>) -> result<raster, raster-error>;
+}
+
+interface postgis-raster-constructors {
+    use postgis-raster-types.{raster, raster-error, pixel-type};
+
+    st-make-empty-raster: func(
+        width: u32, height: u32,
+        upper-left-x: f64, upper-left-y: f64,
+        scale-x: f64, scale-y: f64,
+        skew-x: f64, skew-y: f64,
+        srid: s32,
+    ) -> result<raster, raster-error>;
+
+    st-add-band: func(
+        rast: borrow<raster>,
+        pixel-t: pixel-type,
+        initial-value: f64,
+        no-data-value: option<f64>,
+    ) -> result<raster, raster-error>;
+}
+
+interface postgis-raster-accessors {
+    use postgis-raster-types.{raster, raster-error, pixel-type};
+    use postgis-types.{geometry};
+
+    st-width: func(rast: borrow<raster>) -> u32;
+    st-height: func(rast: borrow<raster>) -> u32;
+    st-num-bands: func(rast: borrow<raster>) -> u32;
+    st-upper-left-x: func(rast: borrow<raster>) -> f64;
+    st-upper-left-y: func(rast: borrow<raster>) -> f64;
+    st-scale-x: func(rast: borrow<raster>) -> f64;
+    st-scale-y: func(rast: borrow<raster>) -> f64;
+    st-skew-x: func(rast: borrow<raster>) -> f64;
+    st-skew-y: func(rast: borrow<raster>) -> f64;
+    st-srid: func(rast: borrow<raster>) -> s32;
+    st-band-pixel-type: func(rast: borrow<raster>, band: u32) -> result<pixel-type, raster-error>;
+    st-band-nodata-value: func(rast: borrow<raster>, band: u32) -> result<option<f64>, raster-error>;
+    st-has-no-band: func(rast: borrow<raster>, band: u32) -> bool;
+    st-value: func(rast: borrow<raster>, band: u32, x: u32, y: u32) -> result<f64, raster-error>;
+    st-set-value: func(
+        rast: borrow<raster>, band: u32, x: u32, y: u32, val: f64,
+    ) -> result<raster, raster-error>;
+    st-pixel-as-point: func(rast: borrow<raster>, x: u32, y: u32) -> result<geometry, raster-error>;
+}
+
+// =================================================================
+// Arc 3 phases B-F — raster surface round-out. Simple-shape
+// upstream calls only. Complex shapes (2D-list returns,
+// records with >1 field, callback-style ST_MapAlgebra) stay
+// behind a TODO list in the shim README for future arcs.
+// =================================================================
+
+interface postgis-raster-pixels {
+    use postgis-raster-types.{raster, raster-error};
+    use postgis-types.{geometry};
+
+    /// 1-based pixel coordinate — phase D shim encodes lists of
+    /// these as JSON arrays of `{x, y}` objects per
+    /// docs/raster-record-encoding.md.
+    record pixel-coord {
+        x: u32,
+        y: u32,
+    }
+
+    st-pixel-as-polygon: func(rast: borrow<raster>, x: u32, y: u32) -> result<geometry, raster-error>;
+    st-pixel-as-centroid: func(rast: borrow<raster>, x: u32, y: u32) -> result<geometry, raster-error>;
+    st-nearest-value: func(rast: borrow<raster>, band: u32, x: u32, y: u32) -> result<f64, raster-error>;
+    st-raster-to-world-coord-x: func(rast: borrow<raster>, col: u32, row: u32) -> f64;
+    st-raster-to-world-coord-y: func(rast: borrow<raster>, col: u32, row: u32) -> f64;
+    // Phase D additions: pixel ops with multi-value returns.
+    st-pixel-of-value: func(rast: borrow<raster>, band: u32, search-value: f64)
+        -> result<list<pixel-coord>, raster-error>;
+    st-dump-values: func(rast: borrow<raster>, band: u32)
+        -> result<list<list<f64>>, raster-error>;
+    st-set-values: func(rast: borrow<raster>, band: u32, x: u32, y: u32, values: list<list<f64>>)
+        -> result<raster, raster-error>;
+    st-world-to-raster-coord: func(rast: borrow<raster>, wx: f64, wy: f64)
+        -> tuple<s32, s32>;
+}
+
+interface postgis-raster-output {
+    use postgis-raster-types.{raster, raster-error};
+
+    st-as-png: func(rast: borrow<raster>, band: u32) -> result<list<u8>, raster-error>;
+    st-as-tiff: func(rast: borrow<raster>) -> result<list<u8>, raster-error>;
+}
+
+interface postgis-raster-stats {
+    use postgis-raster-types.{raster, raster-error};
+
+    /// Records — see docs/raster-record-encoding.md. The shim
+    /// encodes each as JSON utf8 at the SQL boundary; SQL
+    /// consumers extract fields via json_extract.
+    record summary-stats {
+        count: u64,
+        sum: f64,
+        mean: f64,
+        stddev: f64,
+        min: f64,
+        max: f64,
+    }
+    record histogram-bin {
+        min: f64,
+        max: f64,
+        count: u64,
+    }
+    record value-count {
+        value: f64,
+        count: u64,
+    }
+
+    st-quantile: func(rast: borrow<raster>, band: u32, quantile: f64) -> result<f64, raster-error>;
+    st-summary-stats: func(rast: borrow<raster>, band: u32) -> result<summary-stats, raster-error>;
+    st-histogram: func(rast: borrow<raster>, band: u32, bins: u32) -> result<list<histogram-bin>, raster-error>;
+    st-value-count: func(rast: borrow<raster>, band: u32) -> result<list<value-count>, raster-error>;
+}
+
+interface postgis-raster-vector {
+    use postgis-raster-types.{raster, raster-error};
+    use postgis-types.{geometry};
+
+    st-polygon: func(rast: borrow<raster>, band: u32) -> result<geometry, raster-error>;
+    // Phase E — list of (geometry, value) tuples. Shim emits
+    // each entry as `{"geom_hex": "01…", "value": …}` per
+    // docs/raster-record-encoding.md.
+    st-dump-as-polygons: func(rast: borrow<raster>, band: u32)
+        -> result<list<tuple<geometry, f64>>, raster-error>;
+    st-pixel-as-polygons: func(rast: borrow<raster>, band: u32)
+        -> result<list<tuple<geometry, f64>>, raster-error>;
+}
+
+/// Raster map algebra — Arc 1 phase F.
+/// Expression strings pass through verbatim; upstream is the
+/// source of truth for the expression grammar (`val` / `val1`
+/// / `val2` variables, +, -, *, /, comparisons, ?:).
+interface postgis-raster-mapalgebra {
+    use postgis-raster-types.{raster, raster-error, pixel-type};
+
+    st-map-algebra: func(
+        rast: borrow<raster>, band: u32, pixel-t: pixel-type, expression: string,
+    ) -> result<raster, raster-error>;
+    st-map-algebra2: func(
+        rast1: borrow<raster>, band1: u32,
+        rast2: borrow<raster>, band2: u32,
+        pixel-t: pixel-type, expression: string,
+    ) -> result<raster, raster-error>;
+    st-reclass: func(
+        rast: borrow<raster>, band: u32, reclass-expr: string, pixel-t: pixel-type,
+    ) -> result<raster, raster-error>;
+}
+
+interface postgis-raster-predicates {
+    use postgis-raster-types.{raster, raster-error};
+    use postgis-types.{geometry};
+
+    st-raster-convex-hull: func(rast: borrow<raster>) -> result<geometry, raster-error>;
+    st-raster-intersects: func(rast1: borrow<raster>, rast2: borrow<raster>) -> bool;
+    st-raster-contains: func(rast1: borrow<raster>, rast2: borrow<raster>) -> bool;
+    st-raster-within: func(rast1: borrow<raster>, rast2: borrow<raster>) -> bool;
+    st-raster-covers: func(rast1: borrow<raster>, rast2: borrow<raster>) -> bool;
+    st-raster-overlaps: func(rast1: borrow<raster>, rast2: borrow<raster>) -> bool;
+    st-raster-intersects-geom: func(rast: borrow<raster>, geom: borrow<geometry>) -> bool;
+    st-raster-contains-geom: func(rast: borrow<raster>, geom: borrow<geometry>) -> bool;
+}
+
+interface postgis-raster-processing {
+    use postgis-raster-types.{raster, raster-error};
+
+    st-slope: func(rast: borrow<raster>, band: u32) -> result<raster, raster-error>;
+    st-aspect: func(rast: borrow<raster>, band: u32) -> result<raster, raster-error>;
+    st-roughness: func(rast: borrow<raster>, band: u32) -> result<raster, raster-error>;
+    st-tri: func(rast: borrow<raster>, band: u32) -> result<raster, raster-error>;
+    st-tpi: func(rast: borrow<raster>, band: u32) -> result<raster, raster-error>;
+    // Phase G — extra-args processing fns.
+    st-hill-shade: func(
+        rast: borrow<raster>, band: u32, azimuth: f64, altitude: f64,
+    ) -> result<raster, raster-error>;
+    st-resize: func(
+        rast: borrow<raster>, width: u32, height: u32, algorithm: string,
+    ) -> result<raster, raster-error>;
+    st-rescale: func(
+        rast: borrow<raster>, scale-x: f64, scale-y: f64, algorithm: string,
+    ) -> result<raster, raster-error>;
+}
+
+/// Topology — Arc 4 of
+/// docs/PLAN-postgis-mode-b-remaining-arcs.md. MVP slice:
+/// the `topology` resource (verbatim from upstream's
+/// `postgis-topology-types`) plus enough accessors to round-trip
+/// `name / srid / precision / node-count / edge-count / face-count`
+/// through `ScalarValue::Binary`. Edits + queries land in a
+/// follow-up phase.
+interface postgis-topology-types {
+    variant topology-error {
+        invalid-topology(string),
+        node-not-found(u32),
+        edge-not-found(u32),
+        face-not-found(u32),
+        general(string),
+    }
+
+    resource topology {
+        constructor(name: string, srid: s32, precision: f64);
+        name: func() -> string;
+        srid: func() -> s32;
+        precision: func() -> f64;
+        node-count: func() -> u32;
+        edge-count: func() -> u32;
+        face-count: func() -> u32;
+        to-bytes: func() -> list<u8>;
+    }
+
+    from-bytes: func(b: list<u8>) -> result<topology, topology-error>;
+}
+
+interface postgis-topology-output {
+    use postgis-topology-types.{topology, topology-error};
+    use postgis-types.{geometry};
+
+    get-node-geometry: func(topo: borrow<topology>, node: u32) -> result<geometry, topology-error>;
+    get-edge-geometry: func(topo: borrow<topology>, edge: u32) -> result<geometry, topology-error>;
+    get-face-geometry: func(topo: borrow<topology>, face: u32) -> result<geometry, topology-error>;
+    as-topojson: func(topo: borrow<topology>) -> string;
+}
+
+/// Topology mutators + queries — Arc 4 phase B.
+/// Mutators take a borrowed topology, modify it in place, and the
+/// shim's dispatch then serialises the mutated state via to-bytes.
+/// The element id each upstream call returns is lost in the
+/// Binary-transport boundary (no multi-value record yet);
+/// downstream SQL detects the change via the existing *Count
+/// accessors.
+interface postgis-topology-edit {
+    use postgis-topology-types.{topology, topology-error};
+    use postgis-types.{geometry};
+
+    add-iso-node: func(
+        topo: borrow<topology>, face: option<u32>, point: borrow<geometry>,
+    ) -> result<u32, topology-error>;
+    add-iso-edge: func(
+        topo: borrow<topology>, anode: u32, anothernode: u32, line: borrow<geometry>,
+    ) -> result<u32, topology-error>;
+    mod-edge-split: func(
+        topo: borrow<topology>, edge: u32, point: borrow<geometry>,
+    ) -> result<u32, topology-error>;
+    new-edges-split: func(
+        topo: borrow<topology>, edge: u32, point: borrow<geometry>,
+    ) -> result<u32, topology-error>;
+    mod-edge-heal: func(
+        topo: borrow<topology>, anedge: u32, anotheredge: u32,
+    ) -> result<u32, topology-error>;
+    add-face: func(
+        topo: borrow<topology>, poly: borrow<geometry>, force: bool,
+    ) -> result<u32, topology-error>;
+    remove-face: func(topo: borrow<topology>, face: u32) -> result<_, topology-error>;
+}
+
+interface postgis-topology-query {
+    use postgis-topology-types.{topology, topology-error};
+    use postgis-types.{geometry};
+
+    get-node-by-point: func(
+        topo: borrow<topology>, point: borrow<geometry>, tolerance: f64,
+    ) -> result<u32, topology-error>;
+    get-edge-by-point: func(
+        topo: borrow<topology>, point: borrow<geometry>, tolerance: f64,
+    ) -> result<u32, topology-error>;
+    validate-topology: func(topo: borrow<topology>) -> list<string>;
+}
+
+/// Topology TopoGeometry — item 2.B of
+/// docs/PLAN-postgis-mode-b-followups.md. Upstream models a
+/// TopoGeometry as an in-memory resource with no `to-bytes`/
+/// `from-bytes` round-trip path. The shim encodes its STATE
+/// as a JSON envelope per docs/raster-record-encoding.md:
+///   {
+///     "topology_hex":  "<hex-encoded topology bytes>",
+///     "topo_type":     1 | 2 | 3,
+///     "elements":      [{"id": u32, "element_type": u32}, ...]
+///   }
+/// Resource-fingerprint identity rule applies — record + resource
+/// shapes must mirror upstream verbatim.
+interface postgis-topology-topogeom {
+    use postgis-topology-types.{topology, topology-error};
+    use postgis-types.{geometry};
+
+    record topo-element {
+        id: u32,
+        element-type: u32,
+    }
+
+    resource topo-geometry {
+        topo-type: func() -> u32;
+        element-count: func() -> u32;
+        get-elements: func() -> list<topo-element>;
+        geometry: func() -> geometry;
+        clear: func();
+    }
+
+    create-topo-geom: func(
+        topo: borrow<topology>, topo-type: u32, elements: list<topo-element>,
+    ) -> result<topo-geometry, topology-error>;
+}
+
+/// SFCGAL — exact 3D CSG primitives. Arc 5 of
+/// docs/PLAN-postgis-mode-b-remaining-arcs.md.
+///
+/// All functions take WKB byte slices and return WKB or scalar
+/// values; no `geometry` resource crossing. Maps 1:1 to
+/// `ScalarValue::Binary` at the SQL boundary.
+interface postgis-sfcgal {
+    use postgis-types.{postgis-error};
+
+    st-convex-hull-threed: func(wkb: list<u8>) -> result<list<u8>, postgis-error>;
+    st-union-threed: func(a: list<u8>, b: list<u8>) -> result<list<u8>, postgis-error>;
+    st-intersection-threed: func(a: list<u8>, b: list<u8>) -> result<list<u8>, postgis-error>;
+    st-difference-threed: func(a: list<u8>, b: list<u8>) -> result<list<u8>, postgis-error>;
+    st-tesselate: func(wkb: list<u8>) -> result<list<u8>, postgis-error>;
+    st-straight-skeleton: func(wkb: list<u8>) -> result<list<u8>, postgis-error>;
+    st-approximate-medial-axis: func(wkb: list<u8>) -> result<list<u8>, postgis-error>;
+    st-extrude: func(wkb: list<u8>, dx: f64, dy: f64, dz: f64) -> result<list<u8>, postgis-error>;
+    st-minkowski-sum: func(a: list<u8>, b: list<u8>) -> result<list<u8>, postgis-error>;
+    st-volume: func(wkb: list<u8>) -> f64;
+    st-area-threed: func(wkb: list<u8>) -> f64;
+    st-distance-threed: func(a: list<u8>, b: list<u8>) -> f64;
+    st-translate-threed: func(wkb: list<u8>, dx: f64, dy: f64, dz: f64) -> result<list<u8>, postgis-error>;
+    st-scale-threed: func(wkb: list<u8>, sx: f64, sy: f64, sz: f64) -> result<list<u8>, postgis-error>;
+    st-rotate-threed: func(wkb: list<u8>, angle: f64, ax: f64, ay: f64, az: f64) -> result<list<u8>, postgis-error>;
+}
+
+/// postgis-geocoder — TIGER address-parsing subset (data-free).
+/// Pure parsing functions; the data-backed geocode / reverse_geocode
+/// require the gigabyte TIGER/Line dataset and stay out of scope here.
+interface postgis-geocoder {
+    use postgis-types.{postgis-error};
+
+    /// A labelled address component (e.g. label "AddressNumber",
+    /// value "123").
+    record address-component {
+        label: string,
+        value: string,
+    }
+
+    /// A US address split into standard PostGIS-style fields.
+    record parsed-address {
+        number: string,
+        street: string,
+        city: string,
+        state: string,
+        zip: string,
+        zipplus: string,
+    }
+
+    normalize-address: func(addr: string)
+        -> result<list<address-component>, postgis-error>;
+    parse-address: func(addr: string)
+        -> result<parsed-address, postgis-error>;
+}
+
+/// postgis-batch — bulk per-row operations bypassing the
+/// shim ↔ postgis-wasm inter-component crossings entirely.
+///
+/// Each function takes N WKB blobs, runs the per-row computation
+/// in pure Rust inside the postgis-wasm component (one wasmtime
+/// trampoline, no inter-component round-trips per row), and
+/// returns the parallel result vector.
+///
+/// Shim routes scalar `execute_batch` to these when the function
+/// name matches; falls back to per-row dispatch otherwise.
+interface postgis-batch {
+    st-area-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-length-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-x-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-y-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-perimeter-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-distance-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<f64>;
+    st-contains-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-intersects-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-within-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-crosses-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-disjoint-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-equals-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-touches-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-covers-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-covered-by-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-overlaps-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<bool>;
+    st-num-points-batch: func(wkbs: list<list<u8>>) -> list<s32>;
+    st-num-geometries-batch: func(wkbs: list<list<u8>>) -> list<s32>;
+    st-geometry-type-batch: func(wkbs: list<list<u8>>) -> list<string>;
+    st-is-empty-batch: func(wkbs: list<list<u8>>) -> list<bool>;
+    st-is-valid-batch: func(wkbs: list<list<u8>>) -> list<bool>;
+    st-is-simple-batch: func(wkbs: list<list<u8>>) -> list<bool>;
+    st-buffer-batch: func(
+        wkbs: list<list<u8>>, distances: list<f64>,
+    ) -> list<list<u8>>;
+    st-centroid-batch: func(wkbs: list<list<u8>>) -> list<list<u8>>;
+    st-envelope-batch: func(wkbs: list<list<u8>>) -> list<list<u8>>;
+    st-convex-hull-batch: func(wkbs: list<list<u8>>) -> list<list<u8>>;
+    st-boundary-batch: func(wkbs: list<list<u8>>) -> list<list<u8>>;
+    st-start-point-batch: func(wkbs: list<list<u8>>) -> list<list<u8>>;
+    st-end-point-batch: func(wkbs: list<list<u8>>) -> list<list<u8>>;
+    st-point-on-surface-batch: func(wkbs: list<list<u8>>) -> list<list<u8>>;
+    st-union-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<list<u8>>;
+    st-intersection-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<list<u8>>;
+    st-difference-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<list<u8>>;
+    st-sym-difference-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<list<u8>>;
+    st-simplify-preserve-topology-batch: func(
+        wkbs: list<list<u8>>, tolerances: list<f64>,
+    ) -> list<list<u8>>;
+    st-union-aggregate-batch: func(wkbs: list<list<u8>>) -> list<u8>;
+    st-make-line-aggregate-batch: func(wkbs: list<list<u8>>) -> list<u8>;
+    st-polygonize-aggregate-batch: func(wkbs: list<list<u8>>) -> list<u8>;
+    st-extent-threed-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-geog-distance-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<f64>;
+    st-geog-length-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-geog-area-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-geog-perimeter-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-geog-dwithin-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+        thresholds: list<f64>,
+    ) -> list<bool>;
+    st-distance-sphere-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<f64>;
+    st-geog-azimuth-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<f64>;
+    st-project-batch: func(
+        wkbs: list<list<u8>>, distances: list<f64>, azimuths: list<f64>,
+    ) -> list<list<u8>>;
+    st-geog-project-batch: func(
+        wkbs: list<list<u8>>, azimuths: list<f64>, distances: list<f64>,
+    ) -> list<list<u8>>;
+    st-distance-spheroid-batch: func(
+        as-wkbs: list<list<u8>>, bs-wkbs: list<list<u8>>,
+    ) -> list<f64>;
+    st-point-n-batch: func(
+        wkbs: list<list<u8>>, ns: list<s32>,
+    ) -> list<list<u8>>;
+    st-simplify-batch: func(
+        wkbs: list<list<u8>>, tolerances: list<f64>,
+    ) -> list<list<u8>>;
+    st-geog-segmentize-batch: func(
+        wkbs: list<list<u8>>, max-segment-lengths: list<f64>,
+    ) -> list<list<u8>>;
+
+    /// Raster DFER-header batches — see upstream batch.wit
+    /// for the layout. Each accessor reads from the
+    /// pure-bytes prefix without any GDAL crossing.
+    st-rast-width-dfer-batch: func(rasts: list<list<u8>>) -> list<s32>;
+    st-rast-height-dfer-batch: func(rasts: list<list<u8>>) -> list<s32>;
+    st-rast-srid-dfer-batch: func(rasts: list<list<u8>>) -> list<s32>;
+    st-rast-upper-left-x-dfer-batch: func(rasts: list<list<u8>>) -> list<f64>;
+    st-rast-upper-left-y-dfer-batch: func(rasts: list<list<u8>>) -> list<f64>;
+    st-rast-scale-x-dfer-batch: func(rasts: list<list<u8>>) -> list<f64>;
+    st-rast-scale-y-dfer-batch: func(rasts: list<list<u8>>) -> list<f64>;
+    st-rast-skew-x-dfer-batch: func(rasts: list<list<u8>>) -> list<f64>;
+    st-rast-skew-y-dfer-batch: func(rasts: list<list<u8>>) -> list<f64>;
+    /// Guard for the above — true iff every input is a
+    /// DFER-magic-prefixed raster.
+    rast-dfer-all-batch: func(rasts: list<list<u8>>) -> bool;
+    /// Broader guard for the width/height batches which now also
+    /// understand GeoTIFF tags (256 = ImageWidth, 257 = ImageLength).
+    rast-metadata-all-batch: func(rasts: list<list<u8>>) -> bool;
+
+    st-topology-name-batch: func(topos: list<list<u8>>) -> list<string>;
+    st-topology-srid-batch: func(topos: list<list<u8>>) -> list<s32>;
+    st-topology-precision-batch: func(topos: list<list<u8>>) -> list<f64>;
+    st-topology-node-count-batch: func(topos: list<list<u8>>) -> list<s32>;
+    st-topology-edge-count-batch: func(topos: list<list<u8>>) -> list<s32>;
+    st-topology-face-count-batch: func(topos: list<list<u8>>) -> list<s32>;
+    topo-pgtp-all-batch: func(topos: list<list<u8>>) -> bool;
+    st-z-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-m-batch: func(wkbs: list<list<u8>>) -> list<f64>;
+    st-ndims-batch: func(wkbs: list<list<u8>>) -> list<s32>;
+}

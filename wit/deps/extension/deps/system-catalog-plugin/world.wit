@@ -1,0 +1,186 @@
+/// DataFission System Catalog Plugin Interface
+///
+/// Defines the contract for dynamically-loaded providers of
+/// read-only virtual catalog tables — PostGIS's `spatial_ref_sys`,
+/// `geometry_columns`, `geography_columns`; analogous extensions
+/// for vector, jsonb, etc.
+///
+/// The host (planner + executor) calls `list-tables` once at
+/// registration time and caches the schemas. `read-table` is
+/// called every time a query targets one of those tables; rows
+/// materialise fully — streaming is deferred until a real
+/// workload needs it.
+
+package datafission:system-catalog-plugin@1.0.0;
+
+interface types {
+    /// Logical data types — same enum the function- and
+    /// type-plugin WITs use.
+    enum logical-type {
+        boolean,
+        int8, int16, int32, int64,
+        uint8, uint16, uint32, uint64,
+        float32, float64,
+        utf8, binary,
+        date, time, timestamp,
+    }
+
+    /// Column metadata for a virtual table.
+    record system-column {
+        name: string,
+        data-type: logical-type,
+        nullable: bool,
+    }
+
+    /// One virtual table the provider exposes.
+    record system-table {
+        name: string,
+        columns: list<system-column>,
+    }
+
+    /// A scalar value in a returned row.
+    variant scalar-value {
+        null,
+        boolean(bool),
+        int8(s8), int16(s16), int32(s32), int64(s64),
+        uint8(u8), uint16(u16), uint32(u32), uint64(u64),
+        float32(f32), float64(f64),
+        utf8(string), binary(list<u8>),
+        date(s32), time(s64), timestamp(s64),
+    }
+
+    /// A row from a virtual table (column-order values).
+    type row = list<scalar-value>;
+
+    /// Catalog-side errors.
+    variant catalog-error {
+        unknown-table(string),
+        read-failed(string),
+        internal(string),
+    }
+
+    /// F3 (2026-06-23) — raster column structural metadata. Fed by
+    /// `notify-extension-column-raster-metadata` on the
+    /// system-catalog interface. Comma-separated lists for pixel-
+    /// types / nodata-values match PostgreSQL's `raster_columns`
+    /// column shape.
+    ///
+    /// W2 (Wave 3.5, 2026-06-23) — `srid` is none when this
+    /// notification doesn't carry an SRID update; the shim should
+    /// preserve whatever it had previously. Some when the host
+    /// parsed an SRID from the raster blob's header (e.g. DFER
+    /// magic) and wants the shim to overwrite.
+    record raster-column-metadata {
+        num-bands: u32,
+        pixel-types: string,
+        nodata-values: string,
+        scale-x: f64,
+        scale-y: f64,
+        blocksize-x: u32,
+        blocksize-y: u32,
+        srid: option<s32>,
+    }
+}
+
+/// System catalog provider interface.
+interface system-catalog {
+    use types.{system-table, scalar-value, row, catalog-error, raster-column-metadata};
+
+    /// Catalog name this provider's tables live under
+    /// (`"postgis"`, `"vector"`, `"pg_catalog"`, ...). Tables are
+    /// exposed to SQL as both `<catalog>.<table>` and bare
+    /// `<table>`.
+    catalog-name: func() -> string;
+
+    /// All virtual tables this provider exposes. Called once at
+    /// registration time; the host caches the schemas.
+    list-tables: func() -> result<list<system-table>, catalog-error>;
+
+    /// Materialise rows for `table-name`. The host pre-validates
+    /// that `table-name` matches one returned by `list-tables`,
+    /// but the plugin should still error gracefully on unknown
+    /// names. Streaming is deferred — catalog tables are small.
+    read-table: func(table-name: string) -> result<list<row>, catalog-error>;
+
+    /// Audit Item 10 (2026-06-23) — notify the plugin that a user
+    /// table now has a column declared as one of the plugin's
+    /// extension types. The plugin keeps the (session-id, table-name,
+    /// column-name, type-id, srid, coord-dim) tuple in its own
+    /// thread-local catalog so that subsequent `read-table` calls
+    /// for views like `geometry_columns` / `raster_columns` can
+    /// materialise real rows — all inside the wasm sandbox; the
+    /// host's only job is to forward CREATE TABLE / ALTER TABLE
+    /// notifications. `coord-dim` carries 2 for XY, 3 for XYZ /
+    /// XYM, 4 for XYZM (none when the host doesn't know).
+    /// `srid` carries the declared SRID when known.
+    ///
+    /// F4 (2026-06-23) — `session-id` scopes the entry to a single
+    /// session so concurrent sessions creating tables with the same
+    /// name don't see each other's rows. Pass 0 when the host has
+    /// no session concept (legacy single-session embedders).
+    ///
+    /// Default impl is a no-op so existing plugins don't need to
+    /// implement it.
+    notify-extension-column-added: func(
+        session-id: u64,
+        catalog: string,
+        schema: string,
+        table-name: string,
+        column-name: string,
+        type-id: u32,
+        srid: option<s32>,
+        coord-dim: option<s32>,
+    );
+
+    /// Inverse of notify-extension-column-added — DROP TABLE /
+    /// ALTER TABLE DROP COLUMN paths invoke this so the plugin can
+    /// remove the entry from its catalog. Plugins that don't track
+    /// state can no-op.
+    notify-extension-column-removed: func(
+        session-id: u64,
+        catalog: string,
+        schema: string,
+        table-name: string,
+        column-name: string,
+    );
+
+    /// F4 (2026-06-23) — session-scoped variant of `read-table`. The
+    /// plugin filters its catalog snapshot by `session-id` before
+    /// materialising rows. Sessions only see their own entries.
+    /// Plugins that don't isolate by session can ignore the arg.
+    read-table-for-session: func(
+        session-id: u64,
+        table-name: string,
+    ) -> result<list<row>, catalog-error>;
+
+    /// F3 (2026-06-23) — supplemental column-level metadata that
+    /// only becomes known AFTER the CREATE TABLE notification
+    /// (e.g. raster band count, pixel-type list, blocksize — these
+    /// live inside the raster blob and surface when ST_AddBand
+    /// writes back to the column). Host fires this from
+    /// post-INSERT / post-UPDATE paths when an extension-typed
+    /// blob's structural metadata is now resolvable. Plugins that
+    /// don't track this can no-op.
+    notify-extension-column-raster-metadata: func(
+        session-id: u64,
+        catalog: string,
+        schema: string,
+        table-name: string,
+        column-name: string,
+        metadata: raster-column-metadata,
+    );
+}
+
+/// Host-provided logging.
+interface logging {
+    enum log-level {
+        trace, debug, info, warn, error,
+    }
+    log: func(level: log-level, message: string);
+}
+
+/// System catalog plugin world.
+world system-catalog-plugin {
+    import logging;
+    export system-catalog;
+}

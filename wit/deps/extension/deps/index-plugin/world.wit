@@ -1,0 +1,186 @@
+/// DataFission Index Plugin Interface
+///
+/// Defines the contract for dynamically-loaded index type plugins.
+/// Index plugins provide custom index implementations (e.g., R-tree,
+/// GIN, HNSW) that execute entirely within the WASM sandbox.
+
+package datafission:index-plugin@1.0.0;
+
+/// Shared types for index plugins.
+interface types {
+    /// Logical data types.
+    enum logical-type {
+        boolean,
+        int8,
+        int16,
+        int32,
+        int64,
+        uint8,
+        uint16,
+        uint32,
+        uint64,
+        float32,
+        float64,
+        utf8,
+        binary,
+        date,
+        time,
+        timestamp,
+    }
+
+    /// A scalar value (index key component).
+    variant scalar-value {
+        null,
+        boolean(bool),
+        int8(s8),
+        int16(s16),
+        int32(s32),
+        int64(s64),
+        uint8(u8),
+        uint16(u16),
+        uint32(u32),
+        uint64(u64),
+        float32(f32),
+        float64(f64),
+        utf8(string),
+        binary(list<u8>),
+        date(s32),
+        time(s64),
+        timestamp(s64),
+    }
+
+    /// An index key (composite).
+    type index-key = list<scalar-value>;
+
+    /// An index entry (key + row identifier).
+    record index-entry {
+        key: index-key,
+        row-id: u64,
+    }
+
+    /// Scan direction.
+    enum scan-direction {
+        forward,
+        backward,
+    }
+
+    /// Scan bound.
+    variant scan-bound {
+        unbounded,
+        included(index-key),
+        excluded(index-key),
+    }
+
+    /// Index capabilities.
+    record index-capabilities {
+        point-lookup: bool,
+        range-scan: bool,
+        prefix-scan: bool,
+        ordering: bool,
+        spatial-search: bool,
+        fulltext-search: bool,
+        approximate-membership: bool,
+    }
+
+    /// Index statistics.
+    record index-stats {
+        entry-count: u64,
+        unique-keys: u64,
+        size-bytes: u64,
+    }
+
+    /// Index error.
+    variant index-error {
+        not-found(string),
+        already-exists(string),
+        invalid-key(string),
+        capacity-exceeded(string),
+        io-error(string),
+        internal(string),
+    }
+}
+
+/// The main index plugin interface.
+interface index {
+    use types.{
+        logical-type, scalar-value, index-key, index-entry,
+        scan-direction, scan-bound, index-capabilities,
+        index-stats, index-error,
+    };
+
+    /// Index type name (e.g., "rtree", "hnsw").
+    name: func() -> string;
+
+    /// Stable type ID for IndexKind::Custom(u32).
+    type-id: func() -> u32;
+
+    /// Data types this index supports.
+    supported-types: func() -> list<logical-type>;
+
+    /// Capabilities of this index type.
+    capabilities: func() -> index-capabilities;
+
+    /// Create a new empty index instance, returns handle.
+    create: func(options: list<tuple<string, string>>) -> result<u64, index-error>;
+
+    /// Destroy an index instance.
+    destroy: func(handle: u64);
+
+    /// Insert a key-value pair.
+    insert: func(handle: u64, key: index-key, row-id: u64) -> result<_, index-error>;
+
+    /// Delete by key.
+    delete: func(handle: u64, key: index-key) -> result<bool, index-error>;
+
+    /// Point lookup: check if key exists.
+    contains: func(handle: u64, key: index-key) -> result<bool, index-error>;
+
+    /// Point lookup: get row ID for key.
+    get: func(handle: u64, key: index-key) -> result<option<u64>, index-error>;
+
+    /// Begin a range scan, returns cursor handle.
+    begin-scan: func(
+        handle: u64,
+        start: scan-bound,
+        end: scan-bound,
+        direction: scan-direction,
+        limit: option<u64>,
+    ) -> result<u64, index-error>;
+
+    /// Fetch next entry from cursor.
+    next: func(cursor: u64) -> option<result<index-entry, index-error>>;
+
+    /// Close a cursor.
+    close-scan: func(cursor: u64);
+
+    /// Get index statistics.
+    stats: func(handle: u64) -> result<index-stats, index-error>;
+
+    /// Bulk load entries (more efficient than individual inserts).
+    bulk-load: func(handle: u64, entries: list<index-entry>) -> result<_, index-error>;
+
+    /// Serialize index state to bytes (for persistence).
+    serialize: func(handle: u64) -> result<list<u8>, index-error>;
+
+    /// Deserialize index state from bytes.
+    deserialize: func(data: list<u8>) -> result<u64, index-error>;
+}
+
+/// Host-provided logging.
+interface logging {
+    enum log-level {
+        trace,
+        debug,
+        info,
+        warn,
+        error,
+    }
+
+    log: func(level: log-level, message: string);
+}
+
+/// Index plugin world.
+world index-plugin {
+    import logging;
+    export index;
+}

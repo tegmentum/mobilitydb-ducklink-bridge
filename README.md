@@ -21,7 +21,7 @@ SQLite-target wires via sqlink-loader (#559).
 
 | extension | version | scalars | aggregates | UDTFs | windows | types | operators | casts | preprocessors | catalog | indexes |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| mobilitydb | 0.1.0 | 1486 | 54 | 43 | 0 | 31 | 32 | 36 | 1 | 0 | 3 |
+| mobilitydb | 0.1.0 | 720 | 30 | 43 | 0 | 78 | 32 | 36 | 1 | 0 | 0 |
 
 ## Build
 

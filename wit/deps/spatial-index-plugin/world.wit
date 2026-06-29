@@ -1,0 +1,146 @@
+/// DataFission Spatial Index Plugin Interface
+///
+/// Defines the contract for dynamically-loaded spatial index types
+/// (STRtree, R*Tree, BRIN-spatial, ...). Distinct from
+/// `datafission:index-plugin` because spatial indexes are
+/// envelope/KNN-driven, not 1D-range-driven.
+///
+/// PostGIS provides the canonical implementation: a GEOS STRtree
+/// surfaced as a spatial index that `CREATE INDEX … USING SPATIAL`
+/// resolves to.
+
+package datafission:spatial-index-plugin@1.0.0;
+
+interface types {
+    /// Opaque row identifier inserted alongside each geometry.
+    /// Callers (the executor) map this to a primary-key Key.
+    type spatial-row-id = u64;
+
+    /// 2D axis-aligned bounding box.
+    record envelope {
+        min-x: f64,
+        min-y: f64,
+        max-x: f64,
+        max-y: f64,
+    }
+
+    /// An `(item_id, wkb)` pair the plugin consumes during build.
+    record build-item {
+        item-id: spatial-row-id,
+        wkb: list<u8>,
+    }
+
+    /// Errors from spatial index operations.
+    variant spatial-error {
+        build-failed(string),
+        query-failed(string),
+        unsupported-operation(string),
+        invalid-geometry(string),
+        internal(string),
+    }
+
+    /// Capability flags for a spatial index implementation.
+    record index-capabilities {
+        knn: bool,
+        within-distance: bool,
+        /// H4 (2026-06-22) — true iff the index implements
+        /// `query-within-distance-wkb` for native WKB-aware
+        /// distance predicates. Default-false for
+        /// envelope-only implementations.
+        within-distance-wkb: bool,
+        update-after-build: bool,
+    }
+}
+
+/// The main spatial-index interface. One handle per built index.
+interface spatial-index {
+    use types.{
+        spatial-row-id, envelope, build-item,
+        spatial-error, index-capabilities,
+    };
+
+    /// Index type name (e.g. `"strtree"`, `"rstar"`).
+    name: func() -> string;
+
+    /// Aliases the host should accept as `USING <alias>`
+    /// (e.g. PostGIS exposes its STRtree as `"spatial"`, `"gist"`,
+    /// `"rtree"`).
+    aliases: func() -> list<string>;
+
+    /// Capabilities this implementation supports. Lets the planner
+    /// avoid issuing KNN queries against an envelope-only index.
+    capabilities: func() -> index-capabilities;
+
+    /// Build a new index from the given items. Returns a handle
+    /// the host can use for subsequent queries. Building is
+    /// one-shot — for trees that don't support post-build
+    /// insertion, the host rebuilds rather than streams.
+    build: func(items: list<build-item>) -> result<u64, spatial-error>;
+
+    /// Number of indexed entries (cheap stat for the cost model).
+    entry-count: func(handle: u64) -> u64;
+
+    /// Bounding-box query — return all row IDs whose geometry
+    /// envelope intersects `env`. Unordered.
+    query-envelope: func(
+        handle: u64,
+        env: envelope,
+    ) -> result<list<spatial-row-id>, spatial-error>;
+
+    /// Return up to `k` row IDs whose geometry is nearest to the
+    /// query (opaque bytes — typically WKB), in ascending distance.
+    /// Errors with `unsupported-operation` if `capabilities.knn`
+    /// is false.
+    query-knn: func(
+        handle: u64,
+        query-bytes: list<u8>,
+        k: u32,
+    ) -> result<list<spatial-row-id>, spatial-error>;
+
+    /// Return row IDs whose geometry is within `distance` of a
+    /// pre-computed envelope. Default impl expands the envelope
+    /// and calls `query-envelope`; implementations override when
+    /// they can do better (e.g. STRtree's `withinDistance`).
+    query-within-distance: func(
+        handle: u64,
+        query-env: envelope,
+        distance: f64,
+    ) -> result<list<spatial-row-id>, spatial-error>;
+
+    /// H4 (2026-06-22) — WKB-source within-distance probe.
+    /// Same shape as `query-within-distance` but accepts the
+    /// query geometry as opaque WKB bytes (same format
+    /// `query-knn` consumes). Useful when the underlying engine
+    /// has a native WKB-based predicate (e.g. PostGIS STRtree's
+    /// `withinDistance` over a real geometry vs. an envelope
+    /// approximation) — calling this avoids the host's fallback
+    /// of expanding the envelope by `distance` and filtering
+    /// candidates with a post-pass.
+    ///
+    /// Implementations that don't have a WKB-aware predicate
+    /// should return `unsupported-operation`; the host falls
+    /// back to `query-within-distance` (envelope-expand path)
+    /// in that case.
+    query-within-distance-wkb: func(
+        handle: u64,
+        query-wkb: list<u8>,
+        distance: f64,
+    ) -> result<list<spatial-row-id>, spatial-error>;
+
+    /// Drop the index instance.
+    destroy: func(handle: u64);
+}
+
+/// Host-provided logging.
+interface logging {
+    enum log-level {
+        trace, debug, info, warn, error,
+    }
+    log: func(level: log-level, message: string);
+}
+
+/// Spatial index plugin world.
+world spatial-index-plugin {
+    import logging;
+    export spatial-index;
+}
