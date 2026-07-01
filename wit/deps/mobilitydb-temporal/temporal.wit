@@ -1648,6 +1648,34 @@ interface statistics-ops {
     tfloat-derivative: func(seq: tfloat-sequence) -> option<tfloat-sequence>;
     tfloat-sample-entropy: func(seq: tfloat-sequence, m: u32, r: f64) -> option<f64>;
 
+    // Single-sequence descriptive statistics (#701 tfloat analytics).
+    // Each mirrors mdb_temporal_core::tfloat::tfloat_*; None when the
+    // sequence is empty (or lacks the minimum sample size for the stat).
+    tfloat-sum: func(seq: tfloat-sequence) -> f64;
+    tfloat-count: func(seq: tfloat-sequence) -> u32;
+    tfloat-mean: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-variance: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-stddev: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-median: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-iqr: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-skewness: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-kurtosis: func(seq: tfloat-sequence) -> option<f64>;
+    tfloat-coefficient-of-variation: func(seq: tfloat-sequence) -> option<f64>;
+    /// `percentile` in [0.0, 100.0]; out of range returns None.
+    tfloat-percentile: func(seq: tfloat-sequence, percentile: f64) -> option<f64>;
+    /// `q` in [0.0, 1.0]; out of range returns None.
+    tfloat-quantile: func(seq: tfloat-sequence, q: f64) -> option<f64>;
+    /// Mode via histogram binning; `bin-width` must be > 0.
+    tfloat-mode-single: func(seq: tfloat-sequence, bin-width: f64) -> option<f64>;
+
+    // Autocorrelation family.
+    /// Single-lag autocorrelation; returns None when lag == 0 or lag ≥ len.
+    tfloat-autocorrelation: func(seq: tfloat-sequence, lag: u32) -> option<f64>;
+    /// ACF values for lags 1..=max-lag; short sequences may yield fewer.
+    tfloat-acf: func(seq: tfloat-sequence, max-lag: u32) -> list<f64>;
+    /// PACF via Durbin-Levinson on the ACF.
+    tfloat-pacf: func(seq: tfloat-sequence, max-lag: u32) -> list<f64>;
+
     // Pairwise rolling statistics
     tfloat-temporal-correlation: func(seq1: tfloat-sequence, seq2: tfloat-sequence, window-size: u32) -> option<tfloat-sequence>;
     tfloat-temporal-covariance: func(seq1: tfloat-sequence, seq2: tfloat-sequence, window-size: u32) -> option<tfloat-sequence>;
@@ -2574,6 +2602,136 @@ interface sequence-json-ops {
     sequence-json: func(seq: tfloat-sequence) -> list<sequence-json-row>;
 }
 
+/// Codec coverage expansion (W4B — 2026-06-30).
+///
+/// Closes the largest gap in the previous serde surface: instant-level
+/// EWKT emit, sequence-level EWKT emit for tint/tfloat/tbool/ttext,
+/// MFJSON emit + parse for instant/sequence across the five primary
+/// temporal types.
+///
+/// Naming convention matches the underlying MEOS / `mdb_temporal_core`
+/// helpers (`to-ewkt-*` / `parse-ewkt-*` / `to-mfjson-*` /
+/// `parse-mfjson-*`). The pre-existing `*-from-ewkt` / `*-to-csv` helpers
+/// in `tbool-ops` / `ttext-ops` remain untouched so the upstream compose
+/// graph stays shape-compatible (wac plug only merges instances whose
+/// function set matches exactly).
+interface codec-ops {
+    use types.{tint-instant, tint-sequence, tfloat-instant, tfloat-sequence,
+               tgeompoint-instant, tgeompoint-sequence, timestamp-tz};
+    use ttext-ops.{ttext-instant, ttext-sequence};
+    use tbool-ops.{tbool-instant, tbool-sequence};
+
+    // ----- EWKT emit -----
+    /// Emit `42@<timestamp>` for tint instant.
+    to-ewkt-tint-instant: func(inst: tint-instant) -> string;
+    /// Emit `[v1@t1, v2@t2, ...]` for tint sequence.
+    to-ewkt-tint-sequence: func(seq: tint-sequence) -> string;
+    /// Emit `42.5@<timestamp>` for tfloat instant.
+    to-ewkt-tfloat-instant: func(inst: tfloat-instant) -> string;
+    /// Emit `[v1@t1, v2@t2, ...]` for tfloat sequence (with `Interp=...` prefix when stepwise).
+    to-ewkt-tfloat-sequence: func(seq: tfloat-sequence) -> string;
+    /// Emit `true@<timestamp>` for tbool instant.
+    to-ewkt-tbool-instant: func(inst: tbool-instant) -> string;
+    /// Emit `[v1@t1, v2@t2, ...]` for tbool sequence.
+    to-ewkt-tbool-sequence: func(seq: tbool-sequence) -> string;
+    /// Emit `"text"@<timestamp>` for ttext instant.
+    to-ewkt-ttext-instant: func(inst: ttext-instant) -> string;
+    /// Emit `["t1"@ts1, "t2"@ts2, ...]` for ttext sequence.
+    to-ewkt-ttext-sequence: func(seq: ttext-sequence) -> string;
+    /// Emit `POINT(x y)@<timestamp>` for tgeompoint instant.
+    to-ewkt-tgeompoint-instant: func(inst: tgeompoint-instant) -> string;
+    /// Emit `[POINT(x1 y1)@t1, ...]` for tgeompoint sequence.
+    to-ewkt-tgeompoint-sequence: func(seq: tgeompoint-sequence) -> string;
+
+    // ----- MFJSON emit -----
+    /// Encode tint instant as MF-JSON object.
+    to-mfjson-tint-instant: func(inst: tint-instant) -> string;
+    /// Encode tint sequence as MF-JSON object.
+    to-mfjson-tint-sequence: func(seq: tint-sequence) -> string;
+    /// Encode tfloat instant as MF-JSON object.
+    to-mfjson-tfloat-instant: func(inst: tfloat-instant) -> string;
+    /// Encode tfloat sequence as MF-JSON object.
+    to-mfjson-tfloat-sequence: func(seq: tfloat-sequence) -> string;
+    /// Encode tbool instant as MF-JSON object.
+    to-mfjson-tbool-instant: func(inst: tbool-instant) -> string;
+    /// Encode tbool sequence as MF-JSON object.
+    to-mfjson-tbool-sequence: func(seq: tbool-sequence) -> string;
+    /// Encode ttext instant as MF-JSON object.
+    to-mfjson-ttext-instant: func(inst: ttext-instant) -> string;
+    /// Encode ttext sequence as MF-JSON object.
+    to-mfjson-ttext-sequence: func(seq: ttext-sequence) -> string;
+    /// Encode tgeompoint instant as MF-JSON object.
+    to-mfjson-tgeompoint-instant: func(inst: tgeompoint-instant) -> string;
+    /// Encode tgeompoint sequence as MF-JSON object.
+    to-mfjson-tgeompoint-sequence: func(seq: tgeompoint-sequence) -> string;
+
+    // ----- MFJSON parse (returns none on bad JSON / shape mismatch) -----
+    parse-mfjson-tint-instant: func(json: string) -> option<tint-instant>;
+    parse-mfjson-tint-sequence: func(json: string) -> option<tint-sequence>;
+    parse-mfjson-tfloat-instant: func(json: string) -> option<tfloat-instant>;
+    parse-mfjson-tfloat-sequence: func(json: string) -> option<tfloat-sequence>;
+    parse-mfjson-tbool-instant: func(json: string) -> option<tbool-instant>;
+    parse-mfjson-tbool-sequence: func(json: string) -> option<tbool-sequence>;
+    parse-mfjson-ttext-instant: func(json: string) -> option<ttext-instant>;
+    parse-mfjson-ttext-sequence: func(json: string) -> option<ttext-sequence>;
+    parse-mfjson-tgeompoint-instant: func(json: string) -> option<tgeompoint-instant>;
+    parse-mfjson-tgeompoint-sequence: func(json: string) -> option<tgeompoint-sequence>;
+
+    // ----- GeoJSON helpers (round out the trajectory codec set) -----
+    /// `{ "type":"Point", "coordinates":[x,y] }` for a single 2D point.
+    to-geojson-point: func(x: f64, y: f64) -> string;
+    /// Pretty-printed GeoJSON Point.
+    to-geojson-point-pretty: func(x: f64, y: f64) -> string;
+    /// `{ "type":"LineString", "coordinates":[[x,y],...] }`.
+    to-geojson-linestring: func(coords: list<tuple<f64, f64>>) -> string;
+    /// Single-instant GeoJSON `Feature` with `time` property.
+    to-geojson-tgeompoint-instant: func(inst: tgeompoint-instant) -> string;
+    /// GeoJSON `FeatureCollection` with one Feature per instant.
+    to-geojson-feature-collection: func(seq: tgeompoint-sequence) -> string;
+    /// Parse a GeoJSON Point into `(x, y)`. None on malformed/non-Point.
+    parse-geojson-point: func(geojson: string) -> option<tuple<f64, f64>>;
+    /// Parse a GeoJSON LineString coordinate list.
+    parse-geojson-linestring: func(geojson: string) -> option<list<tuple<f64, f64>>>;
+    /// Parse a GeoJSON Feature with `time` property into a tgeompoint instant.
+    parse-geojson-feature-instant: func(geojson: string) -> option<tgeompoint-instant>;
+    /// Parse a GeoJSON FeatureCollection into a tgeompoint sequence.
+    parse-geojson-feature-sequence: func(geojson: string) -> option<tgeompoint-sequence>;
+
+    // ----- WKB / Hex-WKB (#702) -----
+    //
+    // `mdb_temporal_core::serde::wkb` only ships tgeompoint helpers — there
+    // are no WKB encodings for tint / tfloat / tbool / ttext in core, so this
+    // matrix is tgeompoint-only by design. SRID is passed as `option<u32>`
+    // (none = plain WKB, some = EWKB with SRID flag set). The point/sequence
+    // parsers require an explicit timestamp (instant) or `start-ts` +
+    // `interval-micros` (sequence) because WKB itself carries no time.
+
+    /// Emit WKB Point bytes for a tgeompoint instant. None SRID = plain WKB.
+    to-wkb-tgeompoint-instant: func(inst: tgeompoint-instant, srid: option<u32>) -> list<u8>;
+    /// Parse WKB Point bytes + explicit timestamp into a tgeompoint instant.
+    parse-wkb-tgeompoint-instant: func(bytes: list<u8>, timestamp: timestamp-tz) -> option<tgeompoint-instant>;
+    /// Emit WKB LineString bytes for a tgeompoint sequence. None SRID = plain WKB.
+    to-wkb-tgeompoint-sequence: func(seq: tgeompoint-sequence, srid: option<u32>) -> list<u8>;
+    /// Parse WKB LineString bytes into a tgeompoint sequence; timestamps assigned
+    /// sequentially from `start-ts` with `interval-micros` spacing.
+    parse-wkb-tgeompoint-sequence: func(bytes: list<u8>, start-ts: timestamp-tz, interval-micros: s64) -> option<tgeompoint-sequence>;
+
+    /// Emit hex-encoded EWKB for a tgeompoint instant.
+    to-hex-wkb-tgeompoint-instant: func(inst: tgeompoint-instant, srid: option<u32>) -> string;
+    /// Parse hex-encoded EWKB + explicit timestamp into a tgeompoint instant.
+    parse-hex-wkb-tgeompoint-instant: func(hex: string, timestamp: timestamp-tz) -> option<tgeompoint-instant>;
+    /// Emit hex-encoded EWKB LineString for a tgeompoint sequence.
+    to-hex-wkb-tgeompoint-sequence: func(seq: tgeompoint-sequence, srid: option<u32>) -> string;
+    /// Parse hex-encoded EWKB LineString into a tgeompoint sequence; timestamps
+    /// assigned sequentially from `start-ts` with `interval-micros` spacing.
+    parse-hex-wkb-tgeompoint-sequence: func(hex: string, start-ts: timestamp-tz, interval-micros: s64) -> option<tgeompoint-sequence>;
+
+    /// Generic WKB Point emit (x, y, optional SRID).
+    to-wkb-point: func(x: f64, y: f64, srid: option<u32>) -> list<u8>;
+    /// Generic WKB Point parse. Returns `(x, y, srid)` — `srid` is `some` iff EWKB SRID flag set.
+    parse-wkb-point: func(bytes: list<u8>) -> option<tuple<f64, f64, option<u32>>>;
+}
+
 /// The complete temporal component world
 world temporal-component {
     export types;
@@ -2639,4 +2797,6 @@ world temporal-component {
     export temporal-index-ops;
     export spatial-index-ops;
     export sequence-json-ops;
+    /// W4B (2026-06-30) — codec coverage expansion.
+    export codec-ops;
 }
